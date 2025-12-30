@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StatsUp - İstatistik Merkezi</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { neonGreen: '#39ff14', darkBg: '#0f172a' }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #0f172a; color: white; overflow-x: hidden; }
+        .stat-card { transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-5px); }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #39ff14; }
+        
+        /* Şut Haritası Noktaları */
+        .shot-dot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid rgba(0,0,0,0.5);
+            box-shadow: 0 0 10px #39ff14;
+            background-color: #39ff14;
+            transform: scale(0); /* Başlangıçta gizli, animasyonla gelecek */
+        }
+    </style>
+</head>
+<body class="font-sans bg-[#0f172a] text-white antialiased">
+
+    <nav class="fixed w-full z-[999] top-0 start-0 border-b border-white/10 bg-slate-900/80 backdrop-blur-md">
+        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+            <a href="dashboard.html" class="flex items-center space-x-3 rtl:space-x-reverse">
+                <span class="self-center text-2xl font-bold whitespace-nowrap text-white">Stats<span class="text-neonGreen">Up</span></span>
+            </a>
+            <div class="hidden w-full md:block md:w-auto">
+                <ul class="font-medium flex flex-col p-4 md:p-0 mt-4 border border-gray-100 rounded-lg md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 items-center">
+                    <li><a href="dashboard.html" class="block py-2 px-3 text-white hover:text-neonGreen md:p-0 transition-colors">Panelim</a></li>
+                    <li><a href="matches.html" class="block py-2 px-3 text-white hover:text-neonGreen md:p-0 transition-colors">Maçlarım</a></li>
+                    <li><a href="stats.html" class="block py-2 px-3 text-neonGreen md:p-0 transition-colors">İstatistikler</a></li>
+                    <li><a href="team.html" class="block py-2 px-3 text-white hover:text-neonGreen md:p-0 transition-colors">Takımım</a></li>
+                    <li>
+                        <button onclick="openBookingModal()" class="bg-neonGreen text-slate-900 font-bold rounded-full px-4 py-2 hover:bg-white transition-all shadow-lg shadow-neonGreen/20">
+                            <i class="fa-solid fa-plus mr-2"></i> Saha Kirala
+                        </button>
+                    </li>
+                    <li id="user-menu" class="flex items-center gap-4">
+                        <a href="profile.html" class="flex items-center text-white hover:text-neonGreen transition-colors"><i class="fa-solid fa-user mr-2"></i> Profil</a>
+                        <button id="logoutBtn" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-sign-out-alt mr-2"></i> Çıkış Yap</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-24 pb-12 px-4 container mx-auto max-w-7xl">
+        
+        <div class="flex flex-col md:flex-row justify-between items-center mb-12">
+            <div>
+                <h1 class="text-4xl md:text-5xl font-bold text-white mb-2">
+                    <i class="fa-solid fa-chart-line text-neonGreen mr-3"></i>
+                    İstatistik Merkezi
+                </h1>
+                <p class="text-gray-400">Performansını her açıdan incele</p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <select id="stats-filter" class="bg-slate-800 border-2 border-white/10 text-white px-6 py-3 rounded-lg focus:outline-none focus:border-neonGreen transition-all cursor-pointer">
+                    <option value="season">2025 Sezonu</option>
+                    <option value="last5">Son 5 Maç</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-slate-800 rounded-2xl p-6 border border-white/10 relative overflow-hidden group hover:border-neonGreen transition-colors">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <i class="fa-solid fa-futbol text-6xl text-neonGreen"></i>
+                </div>
+                <div class="text-neonGreen text-4xl font-bold mb-1 kpi-value">0</div>
+                <div class="text-gray-400 text-sm">Gol Sayısı</div>
+                <p id="kpi-sub-0" class="text-xs text-neonGreen mt-2 font-medium">
+                    <i class="fa-solid fa-arrow-up mr-1"></i> Yükleniyor...
+                </p>
+            </div>
+
+            <div class="bg-slate-800 rounded-2xl p-6 border border-white/10 relative overflow-hidden group hover:border-blue-400 transition-colors">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <i class="fa-solid fa-handshake text-6xl text-blue-400"></i>
+                </div>
+                <div class="text-blue-400 text-4xl font-bold mb-1 kpi-value">0</div>
+                <div class="text-gray-400 text-sm">Asist Sayısı</div>
+                <p id="kpi-sub-1" class="text-xs text-blue-400 mt-2 font-medium">
+                    <i class="fa-solid fa-arrow-up mr-1"></i> Yükleniyor...
+                </p>
+            </div>
+
+            <div class="bg-slate-800 rounded-2xl p-6 border border-white/10 relative overflow-hidden group hover:border-yellow-400 transition-colors">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <i class="fa-solid fa-trophy text-6xl text-yellow-400"></i>
+                </div>
+                <div class="text-yellow-400 text-4xl font-bold mb-1 kpi-value">0</div>
+                <div class="text-gray-400 text-sm">Maçın Adamı</div>
+                <p id="kpi-sub-2" class="text-xs text-yellow-400 mt-2 font-medium">
+                    <i class="fa-solid fa-star mr-1"></i> Yükleniyor...
+                </p>
+            </div>
+
+            <div class="bg-slate-800 rounded-2xl p-6 border border-white/10 relative overflow-hidden group hover:border-purple-400 transition-colors">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <i class="fa-solid fa-chart-line text-6xl text-purple-400"></i>
+                </div>
+                <div class="text-purple-400 text-4xl font-bold mb-1 kpi-value">0</div>
+                <div class="text-gray-400 text-sm">Ortalama Puan</div>
+                <p id="kpi-sub-3" class="text-xs text-purple-400 mt-2 font-medium">
+                    Lig Ortalaması: -
+                </p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            
+            <div class="bg-slate-800 rounded-2xl p-6 border border-white/10 h-full flex flex-col relative overflow-hidden">
+                <h3 class="text-xl font-bold text-white mb-6 flex items-center relative z-10">
+                    <i class="fa-solid fa-crosshairs text-neonGreen mr-3"></i> Gol Haritası
+                </h3>
+                <div class="relative flex-1 bg-[#368f4e] rounded-xl border-2 border-white/20 overflow-hidden min-h-[400px] shadow-inner" id="shot-map-container">
+                    <div class="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/grass.png')]"></div>
+                    <div class="absolute top-1/2 left-0 w-full h-0.5 bg-white/30"></div>
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 border-2 border-white/30 rounded-full"></div>
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 bg-white/50 rounded-full"></div>
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/5 h-[18%] border-b-2 border-l-2 border-r-2 border-white/30"></div>
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-[7%] border-b-2 border-l-2 border-r-2 border-white/30"></div>
+                    <div class="absolute top-[12%] left-1/2 -translate-x-1/2 w-1 h-1 bg-white/50 rounded-full"></div>
+                    <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-[15%] h-2 border border-white/50 bg-white/20"></div>
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/5 h-[18%] border-t-2 border-l-2 border-r-2 border-white/30"></div>
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/3 h-[7%] border-t-2 border-l-2 border-r-2 border-white/30"></div>
+                    <div class="absolute bottom-[12%] left-1/2 -translate-x-1/2 w-1 h-1 bg-white/50 rounded-full"></div>
+                    <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-[15%] h-2 border border-white/50 bg-white/20"></div>
+                </div>
+                <div class="mt-4 flex justify-center items-center gap-4 text-sm relative z-10">
+                    <div class="flex items-center text-gray-300">
+                        <span class="w-3 h-3 rounded-full bg-neonGreen shadow-[0_0_10px_#39ff14] mr-2"></span>
+                        Gol Noktaları
+                    </div>
+                </div>
+            </div>
+
+            <div class="analysis-card bg-slate-800 rounded-2xl border border-white/10 p-6">
+                <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <i class="fa-solid fa-chart-radar text-neonGreen mr-3"></i>
+                    Oyuncu Evrimi
+                </h3>
+                <div class="relative h-[500px] flex items-center justify-center">
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <div class="flex items-center justify-center gap-6 mt-6 text-sm">
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 bg-neonGreen/30 border-2 border-neonGreen"></div>
+                        <span class="text-gray-300">Bu Sezon</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 bg-gray-500/30 border-2 border-gray-400"></div>
+                        <span class="text-gray-300">Geçen Sezon</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="performance-card bg-slate-800 rounded-2xl border border-white/10 p-6">
+            <h3 class="text-2xl font-bold text-white mb-6 flex items-center">
+                <i class="fa-solid fa-chart-line text-neonGreen mr-3"></i>
+                Maç Başına Puan Değişimi
+            </h3>
+            <div class="relative h-80">
+                <canvas id="lineChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+    </main>
+
+    <footer class="bg-[#050914] border-t border-white/5 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-500 text-sm">© 2025 <span class="text-neonGreen font-bold">StatsUp</span>. Tüm hakları saklıdır.</p>
+        </div>
+    </footer>
+
+    <div id="bookingModal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 font-sans">
+        <div class="bg-slate-800 border border-white/10 rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden relative transform scale-95 opacity-0 flex flex-col max-h-[90vh]" id="bookingModalContent">
+            <div class="bg-slate-900 p-6 flex justify-between items-center border-b border-white/10 shrink-0">
+                <div>
+                    <h3 class="text-2xl font-bold text-white flex items-center"><i class="fa-solid fa-calendar-days text-neonGreen mr-3"></i> Saha Rezervasyonu</h3>
+                    <p class="text-gray-400 text-sm mt-1">Konum, tarih ve saat seçimi yapınız.</p>
+                </div>
+                <button onclick="closeBookingModal()" class="text-gray-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto custom-scrollbar">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-gray-400 text-xs uppercase font-bold mb-2 block">Şehir <span class="text-red-500">*</span></label>
+                                <select id="city-select" onchange="handleCityChange()" class="w-full bg-slate-900 border border-white/20 text-white rounded-xl px-4 py-3 outline-none focus:border-neonGreen transition-colors"><option value="" disabled selected>Seçiniz</option><option value="34">İstanbul</option><option value="06">Ankara</option><option value="35">İzmir</option></select>
+                            </div>
+                            <div>
+                                <label class="text-gray-400 text-xs uppercase font-bold mb-2 block">İlçe <span class="text-red-500">*</span></label>
+                                <select id="district-select" onchange="handleDistrictChange()" class="w-full bg-slate-900 border border-white/20 text-white rounded-xl px-4 py-3 outline-none focus:border-neonGreen transition-colors disabled:opacity-50" disabled><option value="">Önce Şehir Seç</option></select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-gray-400 text-xs uppercase font-bold mb-3 block">Saha Tercihi <span class="text-red-500">*</span></label>
+                            <div class="space-y-3" id="fields-container"><div class="p-4 bg-slate-900/50 border border-white/10 border-dashed rounded-xl text-center text-gray-500 text-sm">Lütfen önce Şehir ve İlçe seçiniz.</div></div>
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="text-white font-bold border-l-4 border-blue-500 pl-3 mb-4">Tarih</h4>
+                            <input type="date" id="booking-date" class="w-full bg-slate-900 border border-white/20 text-white rounded-xl px-4 py-3 focus:border-neonGreen outline-none cursor-pointer" onclick="this.showPicker()">
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold border-l-4 border-purple-500 pl-3 mb-4">Saat</h4>
+                            <div class="grid grid-cols-3 gap-2" id="time-slots-container"><div class="col-span-3 p-4 text-center text-gray-500 text-sm italic">Saatleri görmek için bir saha seçin.</div></div>
+                        </div>
+                        <div id="selectedTimeInfo" class="hidden mt-4 p-4 bg-neonGreen/10 border border-neonGreen rounded-lg flex justify-between items-center"><div><p class="text-neonGreen text-xs uppercase font-bold">Seçilen Saat</p><p class="text-white font-bold text-lg" id="selectedTimeText">-</p></div><i class="fa-regular fa-clock text-neonGreen text-2xl"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-900 p-6 border-t border-white/10 flex justify-between items-center shrink-0">
+                <div><div class="text-xs text-gray-400 uppercase">Toplam Tutar</div><div class="text-2xl font-bold text-neonGreen" id="total-price">₺0</div></div>
+                <button onclick="confirmBooking()" class="bg-neonGreen text-slate-900 font-bold py-3 px-8 rounded-xl hover:bg-white hover:shadow-[0_0_20px_rgba(57,255,20,0.5)] transition-all flex items-center transform active:scale-95">Ödemeye Geç <i class="fa-solid fa-arrow-right ml-2"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="booking-toast" class="fixed top-24 right-4 z-[10000] bg-slate-800 border-l-4 border-neonGreen text-white p-4 rounded-lg shadow-2xl transform translate-x-full transition-transform duration-500 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-neonGreen/20 flex items-center justify-center text-neonGreen"><i class="fa-solid fa-check text-xl"></i></div>
+        <div><h4 class="font-bold">Rezervasyon Başarılı!</h4><p class="text-sm text-gray-300">Ödeme sayfasına yönlendiriliyorsunuz...</p></div>
+    </div>
+
+    <script>
+        // --- SENİN ORİJİNAL VERİ SETİN (HİÇ DEĞİŞMEDİ) ---
+        const statsData = {
+            season: {
+                kpiCounts: [24, 12, 5], 
+                subtitles: [
+                    "<i class='fa-solid fa-arrow-up mr-1'></i> +8 geçen sezona göre",
+                    "<i class='fa-solid fa-arrow-up mr-1'></i> +5 geçen sezona göre",
+                    "<i class='fa-solid fa-trophy mr-1'></i> Kariyer rekoru",
+                    "Lig Ortalaması: 7.9"
+                ],
+                radar: [82, 88, 90, 85, 60, 74],
+                line: [7.5, 8.2, 6.8, 9.1, 8.8, 7.9, 9.5, 8.4, 9.8, 8.0], 
+                shots: [
+                    {top: '12%', left: '48%', type: 'bg-neonGreen'}, {top: '15%', left: '52%', type: 'bg-neonGreen'},
+                    {top: '8%', left: '50%', type: 'bg-neonGreen'}, {top: '18%', left: '45%', type: 'bg-neonGreen'},
+                    {top: '22%', left: '55%', type: 'bg-neonGreen'}, {top: '10%', left: '40%', type: 'bg-neonGreen'},
+                    {top: '25%', left: '60%', type: 'bg-neonGreen'}, {top: '14%', left: '35%', type: 'bg-neonGreen'},
+                    {top: '20%', left: '65%', type: 'bg-neonGreen'}, {top: '6%', left: '47%', type: 'bg-neonGreen'},
+                    {top: '28%', left: '50%', type: 'bg-neonGreen'}, {top: '30%', left: '42%', type: 'bg-neonGreen'},
+                    {top: '32%', left: '58%', type: 'bg-neonGreen'}, {top: '35%', left: '48%', type: 'bg-neonGreen'},
+                    {top: '15%', left: '25%', type: 'bg-neonGreen'}, {top: '18%', left: '75%', type: 'bg-neonGreen'},
+                    {top: '12%', left: '30%', type: 'bg-neonGreen'}, {top: '10%', left: '70%', type: 'bg-neonGreen'},
+                    {top: '5%', left: '45%', type: 'bg-neonGreen'}, {top: '4%', left: '55%', type: 'bg-neonGreen'},
+                    {top: '3%', left: '49%', type: 'bg-neonGreen'}, {top: '5%', left: '52%', type: 'bg-neonGreen'},
+                    {top: '7%', left: '43%', type: 'bg-neonGreen'}, {top: '6%', left: '58%', type: 'bg-neonGreen'}
+                ]
+            },
+            last5: {
+                kpiCounts: [8, 4, 2],
+                subtitles: [
+                    "Son 5 maçtaki goller",
+                    "Son 5 maçtaki asistler",
+                    "Son 5 maçtaki MVP sayısı",
+                    "<i class='fa-solid fa-fire mr-1'></i> Form Grafiği"
+                ],
+                radar: [75, 85, 88, 80, 55, 70],
+                line: [7.9, 9.5, 8.4, 9.8, 8.0],
+                shots: [
+                    {top: '12%', left: '48%', type: 'bg-neonGreen'}, {top: '8%', left: '52%', type: 'bg-neonGreen'},  
+                    {top: '15%', left: '45%', type: 'bg-neonGreen'}, {top: '6%', left: '50%', type: 'bg-neonGreen'},  
+                    {top: '18%', left: '55%', type: 'bg-neonGreen'}, {top: '22%', left: '42%', type: 'bg-neonGreen'}, 
+                    {top: '10%', left: '58%', type: 'bg-neonGreen'}, {top: '14%', left: '49%', type: 'bg-neonGreen'} 
+                ]
+            }
+        };
+
+        // Çıkış Fonksiyonu
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userName');
+            window.location.href = 'login.html';
+        });
+
+        // --- GÜNCELLEME FONKSİYONU (ORİJİNAL) ---
+        function updateStats(filter) {
+            const data = statsData[filter];
+            const totalPoints = data.line.reduce((a, b) => a + b, 0);
+            const averageRating = (totalPoints / data.line.length).toFixed(1); 
+            const kpiValues = [...data.kpiCounts, averageRating];
+
+            const counters = document.querySelectorAll('.kpi-value');
+            counters.forEach((counter, index) => {
+                gsap.to(counter, {
+                    textContent: kpiValues[index],
+                    duration: 0.5,
+                    snap: { textContent: 0.1 }, 
+                    ease: "power2.out"
+                });
+            });
+
+            data.subtitles.forEach((text, index) => {
+                const subEl = document.getElementById(`kpi-sub-${index}`);
+                if(subEl) {
+                    subEl.innerHTML = text;
+                    subEl.className = filter === 'last5' ? "text-xs text-gray-400 mt-2 font-medium" : "text-xs text-neonGreen mt-2 font-medium";
+                }
+            });
+
+            const mapContainer = document.getElementById('shot-map-container');
+            if (mapContainer) {
+                mapContainer.querySelectorAll('.shot-dot').forEach(dot => dot.remove());
+                data.shots.forEach((shot, i) => {
+                    const dot = document.createElement('div');
+                    dot.className = `shot-dot`; // Stil CSS'de tanımlı
+                    dot.style.top = shot.top;
+                    dot.style.left = shot.left;
+                    mapContainer.appendChild(dot);
+                    gsap.to(dot, { scale: 1, duration: 0.3, delay: i * 0.05, ease: "back.out(2)" });
+                });
+            }
+
+            if(typeof radarChart !== 'undefined') {
+                radarChart.data.datasets[0].data = data.radar;
+                radarChart.update();
+            }
+            if(typeof lineChart !== 'undefined') {
+                lineChart.data.datasets[0].data = data.line;
+                lineChart.data.labels = data.line.map((_, i) => `${i + 1}. Maç`);
+                lineChart.update();
+            }
+        }
+
+        // Dinleyici
+        document.getElementById('stats-filter').addEventListener('change', (e) => {
+            updateStats(e.target.value);
+        });
+
+        // Sayfa Yüklenince
+        document.addEventListener('DOMContentLoaded', function() {
+            gsap.from('.bg-slate-800', { y: 30, opacity: 0, duration: 0.6, stagger: 0.1, ease: 'power2.out' });
+        });
+
+        // Radar Chart (Chart.js)
+        const radarCtx = document.getElementById('radarChart').getContext('2d');
+        const radarChart = new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Hız', 'Şut', 'Pas', 'Dribling', 'Dayanıklılık', 'Savunma'],
+                datasets: [
+                    { label: 'Bu Sezon', data: [82, 88, 90, 85, 74, 60], backgroundColor: 'rgba(57, 255, 20, 0.2)', borderColor: '#39ff14', borderWidth: 3, pointBackgroundColor: '#39ff14', pointBorderColor: '#fff', pointRadius: 5 },
+                    { label: 'Geçen Sezon', data: [70, 75, 82, 78, 72, 58], backgroundColor: 'rgba(156, 163, 175, 0.2)', borderColor: '#9ca3af', borderWidth: 2, pointBackgroundColor: '#9ca3af', pointBorderColor: '#fff', pointRadius: 4 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false, // Grafik kutuya sığsın diye
+                scales: {
+                    r: {
+                        beginAtZero: true, max: 100, ticks: { stepSize: 20, color: '#9ca3af', backdropColor: 'transparent' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }, pointLabels: { color: '#fff', font: { size: 14, weight: 'bold' } }
+                    }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Line Chart
+        const lineCtx = document.getElementById('lineChart').getContext('2d');
+        const lineChart = new Chart(lineCtx, {
+            type: 'line',
+            data: {
+                labels: ['Maç 1', 'Maç 2', 'Maç 3', 'Maç 4', 'Maç 5', 'Maç 6', 'Maç 7', 'Maç 8', 'Maç 9', 'Maç 10'],
+                datasets: [{
+                    label: 'Puan', data: [7.5, 8.2, 9.1, 8.8, 9.5, 9.2, 8.7, 9.0, 8.5, 9.3],
+                    backgroundColor: 'rgba(57, 255, 20, 0.1)', borderColor: '#39ff14', borderWidth: 3, fill: true, tension: 0.4,
+                    pointBackgroundColor: '#39ff14', pointBorderColor: '#fff', pointRadius: 6
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: false, min: 6, max: 10, ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                    x: { ticks: { color: '#9ca3af' }, grid: { display: false } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        updateStats('season');
+
+        // --- REZERVASYON MODALI SCRIPT (TAM VE ÇALIŞAN KOD) ---
+        const locationDB = { "34": ["Kadıköy", "Beşiktaş", "Şişli", "Ümraniye"], "06": ["Çankaya", "Keçiören", "Yenimahalle"], "35": ["Konak", "Karşıyaka", "Bornova"] };
+        const fieldsDB = { 
+            "Kadıköy": [{ id: "k1", name: "Kadıköy Arena", type: "Kapalı", turf: "Suni Çim", players: "7v7", price: 1400, img: "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" }, { id: "k2", name: "Moda Park", type: "Açık", turf: "Hibrit", players: "8v8", price: 1200, img: "https://images.unsplash.com/photo-1459865264687-595d652de67e?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" }], 
+            "Beşiktaş": [{ id: "b1", name: "Kartal Yuvası", type: "Kapalı", turf: "Doğal Çim", players: "6v6", price: 1600, img: "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" }], 
+            "Çankaya": [{ id: "c1", name: "Ankara Gücü", type: "Kapalı", turf: "Suni", players: "7v7", price: 1000, img: "https://images.unsplash.com/photo-1524012431247-53c4ca003c56?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" }], 
+            "default": [{ id: "d1", name: "Merkez Saha", type: "Kapalı", turf: "Suni", players: "7v7", price: 1100, img: "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" }] 
+        };
+        const schedulesDB = { 
+            "k1": [{t:"18:00", f:true}, {t:"19:00", f:true}, {t:"20:00", f:false}, {t:"21:00", f:false}, {t:"22:00", f:true}, {t:"23:00", f:false}], 
+            "k2": [{t:"18:00", f:false}, {t:"19:00", f:false}, {t:"20:00", f:true}, {t:"21:00", f:true}, {t:"22:00", f:false}, {t:"23:00", f:false}], 
+            "default": [{t:"18:00", f:false}, {t:"19:00", f:true}, {t:"20:00", f:false}, {t:"21:00", f:false}, {t:"22:00", f:true}, {t:"23:00", f:false}] 
+        };
+        let state = { city: null, district: null, fieldId: null, fieldPrice: 0, time: null };
+
+        function openBookingModal() { 
+            document.getElementById('bookingModal').classList.remove('hidden'); 
+            const d = document.getElementById('booking-date'); 
+            if(!d.value) d.valueAsDate = new Date(); 
+            gsap.to('#bookingModalContent', { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.2)" }); 
+        }
+        function closeBookingModal() { 
+            gsap.to('#bookingModalContent', { scale: 0.95, opacity: 0, duration: 0.2, onComplete: () => { 
+                document.getElementById('bookingModal').classList.add('hidden'); 
+                document.getElementById('bookingModalContent').style = ""; 
+            }}); 
+        }
+        function handleCityChange() { 
+            const c = document.getElementById('city-select').value; 
+            const d = document.getElementById('district-select'); 
+            state = { city: c, district: null, fieldId: null, fieldPrice: 0, time: null }; 
+            updateUI(); 
+            d.innerHTML = '<option value="">İlçe Seçiniz</option>'; 
+            if(c && locationDB[c]) { 
+                d.disabled = false; 
+                locationDB[c].forEach(x => d.innerHTML += `<option value="${x}">${x}</option>`); 
+            } else { 
+                d.disabled = true; 
+                d.innerHTML = '<option value="">Önce Şehir Seç</option>'; 
+            } 
+        }
+        function handleDistrictChange() { 
+            const dist = document.getElementById('district-select').value; 
+            state.district = dist; state.fieldId = null; state.fieldPrice = 0; state.time = null; 
+            updateUI(); 
+            renderFields(dist); 
+        }
+        function renderFields(dist) { 
+            const c = document.getElementById('fields-container'); 
+            const f = fieldsDB[dist] || fieldsDB["default"]; 
+            c.innerHTML = ''; 
+            f.forEach(x => { 
+                c.innerHTML += `<div onclick="selectPitch('${x.id}', ${x.price})" id="field-${x.id}" class="pitch-card cursor-pointer bg-slate-900 border-2 border-transparent rounded-xl p-3 flex gap-4 transition-all hover:bg-slate-700 relative overflow-hidden group opacity-80"><div class="w-20 h-20 bg-cover bg-center rounded-lg flex-shrink-0" style="background-image: url('${x.img}');"></div><div class="flex-grow"><div class="flex justify-between items-start"><h5 class="text-white font-bold">${x.name} (${x.type})</h5><i class="fa-solid fa-circle text-gray-600 check-icon text-xl"></i></div><p class="text-gray-400 text-xs mt-1">${x.turf} • ${x.players}</p><div class="mt-2 text-neonGreen font-bold text-sm">₺${x.price} / Saat</div></div></div>`; 
+            }); 
+            gsap.from('.pitch-card', { y: 10, opacity: 0, duration: 0.4, stagger: 0.1 }); 
+        }
+        function selectPitch(id, price) { 
+            state.fieldId = id; state.fieldPrice = price; state.time = null; 
+            document.querySelectorAll('.pitch-card').forEach(e => { 
+                e.className = e.className.replace('bg-slate-800 border-neonGreen opacity-100 shadow-lg', 'bg-slate-900 border-transparent opacity-80'); 
+                e.querySelector('.check-icon').className = "fa-solid fa-circle text-gray-600 check-icon text-xl"; 
+            }); 
+            const s = document.getElementById(`field-${id}`); 
+            s.className = s.className.replace('bg-slate-900 border-transparent opacity-80', 'bg-slate-800 border-neonGreen opacity-100 shadow-lg'); 
+            s.querySelector('.check-icon').className = "fa-solid fa-circle-check text-neonGreen check-icon text-xl"; 
+            updateUI(); 
+            renderTimeSlots(id); 
+        }
+        function renderTimeSlots(fid) { 
+            const c = document.getElementById('time-slots-container'); 
+            const s = schedulesDB[fid] || schedulesDB["default"]; 
+            c.innerHTML = ''; 
+            s.forEach(x => { 
+                const b = document.createElement('button'); 
+                if(x.f) { 
+                    b.className = "p-2 rounded-lg bg-red-900/20 border border-red-500/30 text-red-500 text-xs cursor-not-allowed opacity-60"; 
+                    b.innerHTML = `${x.t} <br><span class="font-bold">DOLU</span>`; 
+                    b.disabled = true; 
+                } else { 
+                    b.className = "time-btn p-3 rounded-lg bg-slate-900 border border-white/10 text-gray-300 text-xs hover:border-neonGreen hover:text-white transition-all"; 
+                    b.innerText = x.t; 
+                    b.onclick = () => selectTime(b, x.t); 
+                } 
+                c.appendChild(b); 
+            }); 
+            gsap.from('#time-slots-container button', { scale: 0.8, opacity: 0, duration: 0.3, stagger: 0.05 }); 
+        }
+        function selectTime(btn, t) { 
+            state.time = t; 
+            document.querySelectorAll('.time-btn').forEach(b => b.className = "time-btn p-3 rounded-lg bg-slate-900 border border-white/10 text-gray-300 text-xs hover:border-neonGreen hover:text-white transition-all"); 
+            btn.className = "time-btn p-3 rounded-lg bg-neonGreen text-slate-900 font-bold text-xs shadow-[0_0_10px_#39ff14]"; 
+            updateUI(); 
+        }
+        function updateUI() { 
+            document.getElementById('total-price').innerText = `₺${state.fieldPrice}`; 
+            const i = document.getElementById('selectedTimeInfo'); 
+            if(state.time) { 
+                i.classList.remove('hidden'); 
+                document.getElementById('selectedTimeText').innerText = state.time; 
+            } else { 
+                i.classList.add('hidden'); 
+            } 
+        }
+        function confirmBooking() { 
+            if(!state.city) { alert("Lütfen bir ŞEHİR seçiniz."); return; } 
+            if(!state.district) { alert("Lütfen bir İLÇE seçiniz."); return; } 
+            if(!state.fieldId) { alert("Lütfen SAHA seçiniz."); return; } 
+            if(!state.time) { alert("Lütfen SAAT seçiniz."); return; } 
+            closeBookingModal(); 
+            const t = document.getElementById('booking-toast'); 
+            t.style.transform = "translateX(0)"; 
+            setTimeout(() => t.style.transform = "translateX(150%)", 3000); 
+        }
+    </script>
+</body>
+</html>

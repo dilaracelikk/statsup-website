@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StatsUp - Takımım</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { neonGreen: '#39ff14', darkBg: '#0f172a' }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0f172a; color: white; overflow-x: hidden; }
+        .player-dot { cursor: pointer; transition: transform 0.3s ease, z-index 0s; /* Transform GSAP ile çakışmasın diye sadece hover için */ }
+        .player-dot:hover { transform: translate(-50%, -50%) scale(1.2) !important; z-index: 50; }
+        .player-tooltip { opacity: 0; visibility: hidden; transition: all 0.3s ease; pointer-events: none; }
+        .player-dot:hover .player-tooltip { opacity: 1; visibility: visible; }
+        .dropdown-menu { display: none; opacity: 0; transform: translateY(-10px); transition: all 0.2s ease; }
+        .dropdown-menu.active { display: block; opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body class="font-sans bg-[#0f172a] text-white antialiased">
+    <script>if (localStorage.getItem('isLoggedIn') !== 'true') { /* window.location.href = 'login.html'; */ }</script>
+
+    <nav class="fixed w-full z-50 top-0 start-0 border-b border-white/10 bg-slate-900/80 backdrop-blur-md">
+        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+            <a href="dashboard.html" class="flex items-center space-x-3 rtl:space-x-reverse">
+                <span class="self-center text-2xl font-bold whitespace-nowrap text-white">Stats<span class="text-neonGreen">Up</span></span>
+            </a>
+            <div class="hidden w-full md:block md:w-auto">
+                <ul class="font-medium flex flex-col p-4 md:p-0 mt-4 border border-gray-100 rounded-lg md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 items-center">
+                    <li><a href="dashboard.html" class="block py-2 px-3 text-white hover:text-neonGreen md:p-0 transition-colors">Panelim</a></li>
+                    <li><a href="matches.html" class="block py-2 px-3 text-white hover:text-neonGreen md:p-0 transition-colors">Maçlarım</a></li>
+                    <li><a href="stats.html" class="block py-2 px-3 text-white hover:text-neonGreen md:p-0 transition-colors">İstatistikler</a></li>
+                    <li><a href="team.html" class="block py-2 px-3 text-neonGreen md:p-0 transition-colors">Takımım</a></li>
+                    <li><button onclick="openBookingModal()"    class="bg-neonGreen text-slate-900 font-bold rounded-full px-4 py-2 hover:bg-white transition-all shadow-lg shadow-neonGreen/20"><i class="fa-solid fa-plus mr-2"></i>Saha Kirala</button></li>
+                    <li id="user-menu" class="flex items-center gap-4">
+                        <a href="profile.html" class="flex items-center text-white hover:text-neonGreen transition-colors"><i class="fa-solid fa-user mr-2"></i> Profil</a>
+                        <button id="logoutBtn" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-sign-out-alt mr-2"></i> Çıkış Yap</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-24">
+        <div class="bg-slate-800 rounded-2xl p-8 border border-white/10 mb-8">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex items-center gap-6">
+                    <div class="w-24 h-24 rounded-full bg-gradient-to-br from-neonGreen to-green-600 flex items-center justify-center text-4xl font-bold text-slate-900 shadow-lg shadow-neonGreen/30">YS</div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-white mb-2">No 132 SK</h1>
+                        <p class="text-gray-400 flex items-center gap-2"><i class="fa-solid fa-users"></i> <span id="total-player-count">0</span> Oyuncu</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="relative">
+                        <div class="w-32 h-32 rounded-full border-4 border-neonGreen/30 flex flex-col items-center justify-center bg-slate-900/50">
+                            <div class="text-4xl font-bold text-neonGreen">85</div>
+                            <div class="text-xs text-gray-400 mt-1">Ort. Puan</div>
+                        </div>
+                        <div class="absolute -top-2 -right-2 w-10 h-10 bg-neonGreen rounded-full flex items-center justify-center text-slate-900 font-bold"><i class="fa-solid fa-fire"></i></div>
+                    </div>
+                    <button onclick="openInviteModal()" class="bg-neonGreen text-slate-900 font-bold rounded-full px-6 py-3 hover:bg-white transition-all shadow-lg shadow-neonGreen/30 transform hover:scale-105 active:scale-95">
+                        <i class="fa-solid fa-user-plus mr-2"></i> Oyuncu Davet Et
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-slate-800 rounded-2xl p-6 border border-white/10">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-white flex items-center"><i class="fa-solid fa-chalkboard text-neonGreen mr-3"></i> Taktik Tahtası</h2>
+                    <select id="formation-select" class="bg-slate-900 border border-white/20 text-white rounded-lg px-4 py-2 focus:ring-2 focus:ring-neonGreen outline-none cursor-pointer">
+                        <option value="3-2-1">3-2-1 (Savunma)</option>
+                        <option value="2-3-1">2-3-1 (Orta Saha)</option>
+                        <option value="2-2-2">2-2-2 (Hücum)</option>
+                    </select>
+                </div>
+                <div class="relative bg-[#368f4e] rounded-xl border-2 border-white/20 overflow-hidden shadow-inner" style="height: 600px;" id="tactical-field">
+                    <div class="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/grass.png')]"></div>
+                    <div class="absolute top-1/2 left-0 w-full h-0.5 bg-white/30 -translate-y-1/2"></div>
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 border-2 border-white/30 rounded-full"></div>
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 bg-white/50 rounded-full"></div>
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/5 h-[18%] border-b-2 border-l-2 border-r-2 border-white/30"></div>
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/5 h-[18%] border-t-2 border-l-2 border-r-2 border-white/30"></div>
+                    <div id="players-container"></div>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 rounded-2xl p-6 border border-white/10 flex flex-col h-full">
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center"><i class="fa-solid fa-list text-neonGreen mr-3"></i> Kadro Listesi</h2>
+                <div class="flex-grow overflow-y-auto pr-2 custom-scrollbar space-y-6">
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 ml-1 border-b border-white/5 pb-2">İlk 6</h3>
+                        <div class="space-y-3" id="main-squad-list"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 ml-1 border-b border-white/5 pb-2">Yedekler</h3>
+                        <div class="space-y-3" id="subs-list">
+                            <div id="no-subs-msg" class="text-gray-500 text-sm italic p-4 text-center border border-white/5 border-dashed rounded-xl">Henüz yedek oyuncu yok.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="inviteModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="bg-slate-800 border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden relative transform transition-all scale-95 opacity-0" id="inviteModalContent">
+            <div class="bg-slate-900 p-6 flex justify-between items-center border-b border-white/10">
+                <h3 class="text-xl font-bold text-white flex items-center"><i class="fa-solid fa-user-plus text-neonGreen mr-3"></i> Oyuncu Davet Et</h3>
+                <button onclick="closeInviteModal()" class="text-gray-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            </div>
+            <div class="p-6 bg-slate-800">
+                <p class="text-gray-400 mb-4 text-sm">Liginizdeki boşta olan yetenekli oyuncular:</p>
+                <div class="space-y-4" id="candidate-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- VERİLER ---
+        let myTeam = [
+            { id: 1, name: 'Yusuf P.', fullName: 'Yusuf Pekince', initials: 'YP', position: 'FWD', rating: 85, color: 'from-yellow-400 to-yellow-600', isCaptain: true },
+            { id: 2, name: 'Şerafettin G.', fullName: 'Şerafettin Gökçe', initials: 'SG', position: 'MID', rating: 85, color: 'from-blue-400 to-blue-600' },
+            { id: 3, name: 'Ömer T.', fullName: 'Ömer Taşkın', initials: 'ÖT', position: 'DEF', rating: 85, color: 'from-green-400 to-green-600' },
+            { id: 4, name: 'Niyazi K.', fullName: 'Niyazi Kılınç', initials: 'NK', position: 'MID', rating: 85, color: 'from-purple-400 to-purple-600' },
+            { id: 5, name: 'İbrahim P.', fullName: 'İbrahim Polat', initials: 'İP', position: 'DEF', rating: 85, color: 'from-red-400 to-red-600' },
+            { id: 6, name: 'Harun K.', fullName: 'Harun Karakaş', initials: 'HK', position: 'DEF', rating: 85, color: 'from-orange-400 to-orange-600' }
+        ];
+        let mySubs = [];
+        const formations = {
+            '3-2-1': [{ top: '8%', left: '50%' }, { top: '35%', left: '30%' }, { top: '35%', left: '70%' }, { top: '70%', left: '25%' }, { top: '70%', left: '50%' }, { top: '70%', left: '75%' }],
+            '2-3-1': [{ top: '8%', left: '50%' }, { top: '35%', left: '25%' }, { top: '35%', left: '50%' }, { top: '35%', left: '75%' }, { top: '70%', left: '35%' }, { top: '70%', left: '65%' }],
+            '2-2-2': [{ top: '8%', left: '35%' }, { top: '8%', left: '65%' }, { top: '40%', left: '35%' }, { top: '40%', left: '65%' }, { top: '75%', left: '35%' }, { top: '75%', left: '65%' }]
+        };
+        const candidatePlayers = [
+            { id: 101, name: "Ali Veli", fullName: "Ali Veli", position: "FWD", rating: 88, initials: "AV", color: "from-pink-500 to-rose-500" },
+            { id: 102, name: "Can Yılmaz", fullName: "Can Yılmaz", position: "MID", rating: 84, initials: "CY", color: "from-cyan-500 to-blue-500" },
+            { id: 103, name: "Mert Demir", fullName: "Mert Demir", position: "DEF", rating: 82, initials: "MD", color: "from-emerald-500 to-teal-500" }
+        ];
+
+        // --- RENDER FONKSİYONLARI ---
+        
+        // A) Sahayı Sıfırdan Çiz (Sadece veri değişince kullanılır)
+        function renderPitch() {
+            const container = document.getElementById('players-container');
+            const formationSelect = document.getElementById('formation-select');
+            const positions = formations[formationSelect.value];
+            container.innerHTML = '';
+            const activePlayers = myTeam.slice(0, 6);
+
+            activePlayers.forEach((player, index) => {
+                if (!positions[index]) return;
+                const pos = positions[index];
+                const playerDot = document.createElement('div');
+                // CSS'de transform: translate(-50%, -50%) zaten var, GSAP ile çakışmaması için inline style'dan kaldırdım ve CSS'e ekledim.
+                playerDot.className = `player-dot absolute w-16 h-16 rounded-full bg-gradient-to-br ${player.color} flex items-center justify-center font-bold text-white text-sm shadow-lg border-2 border-white`;
+                // Başlangıç pozisyonu
+                gsap.set(playerDot, { top: pos.top, left: pos.left, xPercent: -50, yPercent: -50 });
+
+                playerDot.innerHTML = `${player.initials}<div class="player-tooltip absolute -top-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-white/20 rounded-lg p-3 shadow-xl w-32 z-50"><p class="text-xs text-white font-bold">${player.fullName}</p><p class="text-xs text-gray-400">${player.position}</p><p class="text-xs text-neonGreen font-bold mt-1">Puan: ${player.rating}</p></div>`;
+                container.appendChild(playerDot);
+                // Giriş Animasyonu (Nokta belirme)
+                gsap.from(playerDot, { scale: 0, duration: 0.5, ease: 'back.out(1.7)', delay: index * 0.1 });
+            });
+        }
+
+        // B) SADECE POZİSYONLARI GÜNCELLE (Kayma Animasyonu İçin)
+        function updatePitchPositions() {
+            const formationSelect = document.getElementById('formation-select');
+            const positions = formations[formationSelect.value];
+            const dots = document.querySelectorAll('#players-container .player-dot');
+            
+            dots.forEach((dot, index) => {
+                if (positions[index]) {
+                    // Mevcut noktaları yeni pozisyonlara kaydır
+                    gsap.to(dot, {
+                        top: positions[index].top,
+                        left: positions[index].left,
+                        duration: 0.8,
+                        ease: 'back.out(1.5)' // Pürüzsüz kayma efekti
+                    });
+                }
+            });
+        }
+
+        // C) Listeleri Çiz
+        function renderLists() {
+            const mainList = document.getElementById('main-squad-list');
+            const subsList = document.getElementById('subs-list');
+            document.getElementById('total-player-count').innerText = myTeam.length + mySubs.length;
+            mainList.innerHTML = ''; 
+            subsList.innerHTML = '';
+
+            myTeam.forEach((player, index) => mainList.appendChild(createPlayerListItem(player, 'team')));
+            if (mySubs.length === 0) {
+                subsList.innerHTML = '<div class="text-gray-500 text-sm italic p-4 text-center border border-white/5 border-dashed rounded-xl">Henüz yedek oyuncu yok.</div>';
+            } else {
+                mySubs.forEach((player, index) => {
+                    subsList.appendChild(createPlayerListItem(player, 'sub'));
+                });
+            }
+        }
+
+        function createPlayerListItem(player, type) {
+            const div = document.createElement('div');
+            div.className = "bg-slate-900/50 rounded-xl p-4 border border-white/10 flex items-center justify-between hover:bg-slate-900/80 transition-all relative group";
+            const captainInfo = player.isCaptain ? { badge: '<span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full ml-2">Kaptan</span>', icon: '<i class="fa-solid fa-crown absolute -top-1 -right-1 text-yellow-400 text-xs bg-slate-900 rounded-full p-0.5"></i>' } : { badge: '', icon: '' };
+            const subBadge = type === 'sub' ? '<span class="text-[10px] bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full uppercase ml-2">Yedek</span>' : '';
+            
+            div.innerHTML = `<div class="flex items-center gap-4"><div class="relative w-12 h-12 rounded-full bg-gradient-to-br ${player.color} flex items-center justify-center font-bold text-white text-lg shadow-lg">${player.initials}${captainInfo.icon}</div><div><h3 class="text-white font-bold flex items-center">${player.fullName}${captainInfo.badge}${subBadge}</h3><p class="text-sm text-gray-400">${player.position} • <span class="text-neonGreen font-semibold">${player.rating}</span> Puan</p></div></div><div class="relative"><button onclick="toggleDropdown(event, '${type}-${player.id}')" class="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10"><i class="fa-solid fa-ellipsis-vertical text-xl"></i></button><div id="dropdown-${type}-${player.id}" class="dropdown-menu absolute right-0 top-full mt-2 w-48 bg-slate-800 border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">${type === 'sub' ? `<button onclick="promotePlayer(${player.id})" class="w-full text-left px-4 py-3 text-sm text-white hover:bg-neonGreen hover:text-slate-900 transition-colors flex items-center"><i class="fa-solid fa-arrow-up mr-2"></i> As Kadroya Al</button>` : ''}<button onclick="removePlayer(${player.id}, '${type}')" class="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors flex items-center border-t border-white/5"><i class="fa-solid fa-trash-can mr-2"></i> Takımdan Çıkar</button></div></div>`;
+            return div;
+        }
+
+        // --- AKSİYONLAR ---
+        function toggleDropdown(e, id) { e.stopPropagation(); document.querySelectorAll('.dropdown-menu').forEach(el => el.id !== `dropdown-${id}` ? el.classList.remove('active') : null); document.getElementById(`dropdown-${id}`).classList.toggle('active'); }
+        function removePlayer(id, type) { type === 'team' ? myTeam = myTeam.filter(p => p.id !== id) : mySubs = mySubs.filter(p => p.id !== id); updateTeamUI(true); } // true = veri değişti, sahayı yeniden çiz
+        function promotePlayer(id) { const idx = mySubs.findIndex(p => p.id === id); if(idx > -1) { const p = mySubs[idx]; if(myTeam.length >=6) mySubs.push(myTeam.pop()); mySubs.splice(idx,1); myTeam.push(p); updateTeamUI(true); }}
+        function invitePlayer(id) { 
+            const p = candidatePlayers.find(x => x.id === id); 
+            if(!p) return;
+            const newPlayer = {...p, id: Date.now()}; 
+            mySubs.push(newPlayer); 
+            updateTeamUI(true); 
+            closeInviteModal(); 
+        }
+        
+        // Merkezi Güncelleme Fonksiyonu
+        function updateTeamUI(dataChanged = false) {
+            renderLists();
+            // Eğer veri değiştiyse (ekleme/silme) sahayı baştan çiz, yoksa sadece pozisyonları güncelle
+            if (dataChanged) { renderPitch(); } 
+            document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.remove('active'));
+        }
+
+        // --- MODAL ---
+        function openInviteModal() { const l=document.getElementById('candidate-list'); l.innerHTML=''; candidatePlayers.forEach(p=>{ l.innerHTML+=`<div class="flex items-center justify-between p-4 bg-slate-900/50 border border-white/10 rounded-xl hover:bg-slate-900 transition-colors"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-full bg-gradient-to-br ${p.color} flex items-center justify-center font-bold text-white text-lg shadow-lg">${p.initials}</div><div><h4 class="text-white font-bold">${p.fullName}</h4><p class="text-xs text-gray-400">${p.position} • <span class="text-neonGreen">${p.rating}</span></p></div></div><button onclick="invitePlayer(${p.id})" class="bg-neonGreen/10 text-neonGreen hover:bg-neonGreen hover:text-slate-900 px-4 py-2 rounded-lg font-bold text-sm transition-all border border-neonGreen/20"><i class="fa-solid fa-envelope mr-1"></i> Davet Et</button></div>`}); document.getElementById('inviteModal').classList.remove('hidden'); gsap.to('#inviteModalContent', {scale:1, opacity:1, duration:0.3, ease:'back.out(1.2)'}); }
+        function closeInviteModal() { gsap.to('#inviteModalContent', {scale:0.9, opacity:0, duration:0.2, onComplete:()=>document.getElementById('inviteModal').classList.add('hidden')}); }
+
+        // --- EVENT LISTENERS ---
+        document.addEventListener('click', () => document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.remove('active')));
+        document.getElementById('logoutBtn').addEventListener('click', () => { localStorage.removeItem('isLoggedIn'); window.location.href='login.html'; });
+        
+        // KRİTİK DÜZELTME: Diziliş değişince sadece pozisyonları güncelle
+        document.getElementById('formation-select').addEventListener('change', () => {
+            updatePitchPositions(); // renderPitch() DEĞİL!
+        });
+
+        // Başlangıç
+        updateTeamUI(true); // İlk açılışta sahayı çiz
+        gsap.from('.bg-slate-800', { y: 50, opacity: 0, duration: 0.8, stagger: 0.2, ease: 'power2.out' });
+        
+    </script>
+    <div id="bookingModal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 font-sans">
+    <div class="bg-slate-800 border border-white/10 rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden relative transform scale-95 opacity-0 flex flex-col max-h-[90vh]" id="bookingModalContent">
+        
+        <div class="bg-slate-900 p-6 flex justify-between items-center border-b border-white/10 shrink-0">
+            <div>
+                <h3 class="text-2xl font-bold text-white flex items-center">
+                    <i class="fa-solid fa-calendar-days text-neonGreen mr-3"></i>
+                    Saha Rezervasyonu
+                </h3>
+                <p class="text-gray-400 text-sm mt-1">Konum, tarih ve saat seçimi yapınız.</p>
+            </div>
+            <button onclick="closeBookingModal()" class="text-gray-400 hover:text-white transition-colors w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10">
+                <i class="fa-solid fa-xmark text-2xl"></i>
+            </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto custom-scrollbar">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                <div class="space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-gray-400 text-xs uppercase font-bold mb-2 block">Şehir <span class="text-red-500">*</span></label>
+                            <select id="city-select" onchange="handleCityChange()" class="w-full bg-slate-900 border border-white/20 text-white rounded-xl px-4 py-3 outline-none focus:border-neonGreen transition-colors">
+                                <option value="" disabled selected>Seçiniz</option>
+                                <option value="34">İstanbul</option>
+                                <option value="06">Ankara</option>
+                                <option value="35">İzmir</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-gray-400 text-xs uppercase font-bold mb-2 block">İlçe <span class="text-red-500">*</span></label>
+                            <select id="district-select" onchange="handleDistrictChange()" class="w-full bg-slate-900 border border-white/20 text-white rounded-xl px-4 py-3 outline-none focus:border-neonGreen transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                <option value="">Önce Şehir Seç</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-gray-400 text-xs uppercase font-bold mb-3 block">Saha Tercihi <span class="text-red-500">*</span></label>
+                        <div class="space-y-3" id="fields-container">
+                            <div class="p-4 bg-slate-900/50 border border-white/10 border-dashed rounded-xl text-center text-gray-500 text-sm">
+                                Lütfen önce Şehir ve İlçe seçiniz.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="text-white font-bold border-l-4 border-blue-500 pl-3 mb-4">Tarih</h4>
+                        <input type="date" id="booking-date" class="w-full bg-slate-900 border border-white/20 text-white rounded-xl px-4 py-3 focus:border-neonGreen outline-none cursor-pointer" onclick="this.showPicker()">
+                    </div>
+
+                    <div>
+                        <h4 class="text-white font-bold border-l-4 border-purple-500 pl-3 mb-4">Saat Seçimi</h4>
+                        <div class="grid grid-cols-4 gap-3 overflow-y-auto pr-2" id="time-slots-container" style="max-height: 400px;">
+                            <div class="col-span-4 p-4 text-center text-gray-500 text-sm italic">
+                                Saatleri görmek için bir saha seçin.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="selectedTimeInfo" class="hidden mt-4 p-4 bg-neonGreen/10 border border-neonGreen rounded-lg flex justify-between items-center animate-fade-in">
+                        <div>
+                            <p class="text-neonGreen text-xs uppercase font-bold">Seçilen Saat</p>
+                            <p class="text-white font-bold text-lg" id="selectedTimeText">-</p>
+                        </div>
+                        <i class="fa-regular fa-clock text-neonGreen text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 p-6 border-t border-white/10 flex justify-between items-center shrink-0">
+            <div>
+                <div class="text-xs text-gray-400 uppercase">Toplam Tutar</div>
+                <div class="text-2xl font-bold text-neonGreen" id="total-price">₺0</div>
+            </div>
+            <button onclick="confirmBooking()" class="bg-neonGreen text-slate-900 font-bold py-3 px-8 rounded-xl hover:bg-white hover:shadow-[0_0_20px_rgba(57,255,20,0.5)] transition-all flex items-center transform active:scale-95">
+                Ödemeye Geç <i class="fa-solid fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="booking-toast" class="fixed top-24 right-4 z-[10000] bg-slate-800 border-l-4 border-neonGreen text-white p-4 rounded-lg shadow-2xl transform translate-x-full transition-transform duration-500 flex items-center gap-4">
+    <div class="w-10 h-10 rounded-full bg-neonGreen/20 flex items-center justify-center text-neonGreen">
+        <i class="fa-solid fa-check text-xl"></i>
+    </div>
+    <div>
+        <h4 class="font-bold">Rezervasyon Başarılı!</h4>
+        <p class="text-sm text-gray-300">Ödeme sayfasına yönlendiriliyorsunuz...</p>
+    </div>
+</div>
+
+<div id="error-toast" class="fixed top-24 right-4 z-[10000] bg-slate-800 border-l-4 border-red-500 text-white p-4 rounded-lg shadow-2xl transform translate-x-full transition-transform duration-500 flex items-center gap-4">
+    <div class="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-500">
+        <i class="fa-solid fa-exclamation-triangle text-xl"></i>
+    </div>
+    <div>
+        <h4 class="font-bold" id="error-toast-title">Hata!</h4>
+        <p class="text-sm text-gray-300" id="error-toast-message">Bir hata oluştu.</p>
+    </div>
+</div>
+
+<script>
+    // --- MOCK VERİTABANI (Dinamik Yapı) ---
+    
+    // 1. Lokasyonlar
+    const locationDB = {
+        "34": ["Kadıköy", "Beşiktaş", "Şişli", "Ümraniye"], // İstanbul
+        "06": ["Çankaya", "Keçiören", "Yenimahalle"],       // Ankara
+        "35": ["Konak", "Karşıyaka", "Bornova"]             // İzmir
+    };
+
+    // 2. Sahalar (İlçe Bazlı)
+    const fieldsDB = {
+        "Kadıköy": [
+            { id: "k1", name: "Kadıköy Arena", type: "Kapalı", turf: "Suni Çim", players: "7v7", price: 1400, img: "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" },
+            { id: "k2", name: "Moda Park", type: "Açık", turf: "Hibrit", players: "8v8", price: 1200, img: "https://images.unsplash.com/photo-1459865264687-595d652de67e?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" },
+            { id: "k3", name: "Fenerbahçe Spor", type: "Kapalı", turf: "Suni Çim", players: "6v6", price: 1500, img: "https://images.unsplash.com/photo-1551958219-acbc608c6377?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" }
+        ],
+        "Beşiktaş": [
+            { id: "b1", name: "Kartal Yuvası", type: "Kapalı", turf: "Doğal Çim", players: "6v6", price: 1600, img: "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" },
+            { id: "b2", name: "Vodafone Park Halı Saha", type: "Açık", turf: "Suni Çim", players: "7v7", price: 1350, img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" }
+        ],
+        "Şişli": [
+            { id: "s1", name: "Mecidiyeköy Arena", type: "Kapalı", turf: "Suni Çim", players: "7v7", price: 1450, img: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" },
+            { id: "s2", name: "Şişli City Sports", type: "Kapalı", turf: "Hibrit", players: "8v8", price: 1600, img: "https://images.unsplash.com/photo-1551958219-acbc608c6377?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" }
+        ],
+        "Çankaya": [
+            { id: "c1", name: "Ankara Gücü Spor", type: "Kapalı", turf: "Suni", players: "7v7", price: 1000, img: "https://images.unsplash.com/photo-1524012431247-53c4ca003c56?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" },
+            { id: "c2", name: "Kızılay Halı Saha", type: "Açık", turf: "Kum", players: "5v5", price: 800, img: "https://images.unsplash.com/photo-1518605448904-8039652a67a2?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" },
+            { id: "c3", name: "Çankaya Sports Complex", type: "Kapalı", turf: "Suni Çim", players: "7v7", price: 1100, img: "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" }
+        ],
+        "Konak": [
+            { id: "iz1", name: "İzmir Konak Arena", type: "Kapalı", turf: "Suni Çim", players: "7v7", price: 1100, img: "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" },
+            { id: "iz2", name: "Alsancak Halı Saha", type: "Açık", turf: "Hibrit", players: "8v8", price: 900, img: "https://images.unsplash.com/photo-1459865264687-595d652de67e?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" }
+        ],
+        // Diğer ilçeler için varsayılan
+        "default": [
+            { id: "d1", name: "Merkez Halı Saha", type: "Kapalı", turf: "Suni", players: "7v7", price: 1100, img: "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" },
+            { id: "d2", name: "City Sports Club", type: "Kapalı", turf: "Suni Çim", players: "6v6", price: 1000, img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80" }
+        ]
+    };
+
+    // 3. Saatler (Saha ID Bazlı) - Her sahayla farklı
+    const schedulesDB = {
+        // Kadıköy sahalari
+        "k1": [ {t:"08:00", f:false}, {t:"09:00", f:false}, {t:"10:00", f:true}, {t:"11:00", f:false}, {t:"12:00", f:false}, {t:"13:00", f:true}, {t:"14:00", f:false}, {t:"15:00", f:false}, {t:"16:00", f:false}, {t:"17:00", f:true}, {t:"18:00", f:false}, {t:"19:00", f:false}, {t:"20:00", f:false}, {t:"21:00", f:true}, {t:"22:00", f:false}, {t:"23:00", f:false} ],
+        "k2": [ {t:"08:00", f:false}, {t:"09:00", f:true}, {t:"10:00", f:false}, {t:"11:00", f:false}, {t:"12:00", f:false}, {t:"13:00", f:false}, {t:"14:00", f:true}, {t:"15:00", f:false}, {t:"16:00", f:false}, {t:"17:00", f:false}, {t:"18:00", f:false}, {t:"19:00", f:false}, {t:"20:00", f:true}, {t:"21:00", f:false}, {t:"22:00", f:false}, {t:"23:00", f:false} ],
+        "k3": [ {t:"08:00", f:false}, {t:"09:00", f:false}, {t:"10:00", f:false}, {t:"11:00", f:true}, {t:"12:00", f:false}, {t:"13:00", f:false}, {t:"14:00", f:false}, {t:"15:00", f:false}, {t:"16:00", f:true}, {t:"17:00", f:false}, {t:"18:00", f:false}, {t:"19:00", f:false}, {t:"20:00", f:false}, {t:"21:00", f:false}, {t:"22:00", f:true}, {t:"23:00", f:false} ],
+        // Beşiktaş sahalari
+        "b1": [ {t:"08:00", f:true}, {t:"09:00", f:false}, {t:"10:00", f:false}, {t:"11:00", f:false}, {t:"12:00", f:true}, {t:"13:00", f:false}, {t:"14:00", f:false}, {t:"15:00", f:true}, {t:"16:00", f:false}, {t:"17:00", f:false}, {t:"18:00", f:false}, {t:"19:00", f:true}, {t:"20:00", f:false}, {t:"21:00", f:false}, {t:"22:00", f:false}, {t:"23:00", f:true} ],
+        "b2": [ {t:"08:00", f:false}, {t:"09:00", f:false}, {t:"10:00", f:true}, {t:"11:00", f:false}, {t:"12:00", f:false}, {t:"13:00", f:false}, {t:"14:00", f:false}, {t:"15:00", f:false}, {t:"16:00", f:false}, {t:"17:00", f:false}, {t:"18:00", f:true}, {t:"19:00", f:false}, {t:"20:00", f:false}, {t:"21:00", f:false}, {t:"22:00", f:false}, {t:"23:00", f:false} ],
+        // Şişli sahalari
+        "s1": [ {t:"08:00", f:false}, {t:"09:00", f:false}, {t:"10:00", f:false}, {t:"11:00", f:false}, {t:"12:00", f:false}, {t:"13:00", f:false}, {t:"14:00", f:true}, {t:"15:00", f:false}, {t:"16:00", f:false}, {t:"17:00", f:false}, {t:"18:00", f:false}, {t:"19:00", f:false}, {t:"20:00", f:false}, {t:"21:00", f:true}, {t:"22:00", f:false}, {t:"23:00", f:false} ],
+        "s2": [ {t:"08:00", f:true}, {t:"09:00", f:false}, {t:"10:00", f:false}, {t:"11:00", f:false}, {t:"12:00", f:false}, {t:"13:00", f:false}, {t:"14:00", f:false}, {t:"15:00", f:false}, {t:"16:00", f:false}, {t:"17:00", f:false}, {t:"18:00", f:false}, {t:"19:00", f:true}, {t:"20:00", f:false}, {t:"21:00", f:false}, {t:"22:00", f:false}, {t:"23:00", f:false} ],
+        // Çankaya sahalari
+        "c1": [ {t:"08:00", f:false}, {t:"09:00", f:false}, {t:"10:00", f:false}, {t:"11:00", f:false}, {t:"12:00", f:true}, {t:"13:00", f:false}, {t:"14:00", f:false}, {t:"15:00", f:false}, {t:"16:00", f:false}, {t:"17:00", f:false}, {t:"18:00", f:false}, {t:"19:00", f:true}, {t:"20:00", f:false}, {t:"21:00", f:false}, {t:"22:00", f:false}, {t:"23:00", f:false} ],
+        "c2": [ {t:"08:00", f:false}, {t:"09:00", f:true}, {t:"10:00", f:false}, {t:"11:00", f:false}, {t:"12:00", f:false}, {t:"13:00", f:false}, {t:"14:00", f:false}, {t:"15:00", f:true}, {t:"16:00", f:false}, {t:"17:00", f:false}, {t:"18:00", f:false}, {t:"19:00", f:false}, {t:"20:00", f:false}, {t:"21:00", f:false}, {t:"22:00", f:true}, {t:"23:00", f:false} ],
+        "c3": [ {t:"08:00", f:false}, {t:"09:00", f:false}, {t:"10:00", f:false}, {t:"11:00", f:false}, {t:"12:00", f:false}, {t:"13:00", f:true}, {t:"14:00", f:false}, {t:"15:00", f:false}, {t:"16:00", f:false}, {t:"17:00", f:false}, {t:"18:00", f:true}, {t:"19:00", f:false}, {t:"20:00", f:false}, {t:"21:00", f:false}, {t:"22:00", f:false}, {t:"23:00", f:false} ],
+        // İzmir sahalari
+        "iz1": [ {t:"08:00", f:false}, {t:"09:00", f:false}, {t:"10:00", f:true}, {t:"11:00", f:false}, {t:"12:00", f:false}, {t:"13:00", f:false}, {t:"14:00", f:false}, {t:"15:00", f:false}, {t:"16:00", f:false}, {t:"17:00", f:false}, {t:"18:00", f:false}, {t:"19:00", f:false}, {t:"20:00", f:true}, {t:"21:00", f:false}, {t:"22:00", f:false}, {t:"23:00", f:false} ],
+        "iz2": [ {t:"08:00", f:false}, {t:"09:00", f:false}, {t:"10:00", f:false}, {t:"11:00", f:false}, {t:"12:00", f:false}, {t:"13:00", f:false}, {t:"14:00", f:false}, {t:"15:00", f:false}, {t:"16:00", f:true}, {t:"17:00", f:false}, {t:"18:00", f:false}, {t:"19:00", f:false}, {t:"20:00", f:false}, {t:"21:00", f:true}, {t:"22:00", f:false}, {t:"23:00", f:false} ],
+        // Default
+        "default": [ {t:"08:00", f:false}, {t:"09:00", f:false}, {t:"10:00", f:false}, {t:"11:00", f:false}, {t:"12:00", f:true}, {t:"13:00", f:false}, {t:"14:00", f:false}, {t:"15:00", f:false}, {t:"16:00", f:false}, {t:"17:00", f:false}, {t:"18:00", f:false}, {t:"19:00", f:true}, {t:"20:00", f:false}, {t:"21:00", f:false}, {t:"22:00", f:false}, {t:"23:00", f:false} ]
+    };
+
+    // --- STATE (Seçim Durumları) ---
+    let state = {
+        city: null,
+        district: null,
+        fieldId: null,
+        fieldPrice: 0,
+        time: null
+    };
+
+    // --- FONKSİYONLAR ---
+
+    // 1. Modal Aç/Kapa
+    function openBookingModal() {
+        document.getElementById('bookingModal').classList.remove('hidden');
+        
+        // Tarihi ayarla ve geçmiş tarihleri engelle
+        const dateInput = document.getElementById('booking-date');
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        dateInput.setAttribute('min', todayStr);
+        if(!dateInput.value) dateInput.value = todayStr;
+
+        gsap.to('#bookingModalContent', { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.2)" });
+    }
+
+    function closeBookingModal() {
+        gsap.to('#bookingModalContent', { scale: 0.95, opacity: 0, duration: 0.2, onComplete: () => {
+            document.getElementById('bookingModal').classList.add('hidden');
+            document.getElementById('bookingModalContent').style = ""; // Reset inline styles
+        }});
+    }
+
+    // 2. Şehir Değişimi
+    function handleCityChange() {
+        const citySelect = document.getElementById('city-select');
+        const districtSelect = document.getElementById('district-select');
+        const cityCode = citySelect.value;
+
+        // Reset State
+        state = { city: cityCode, district: null, fieldId: null, fieldPrice: 0, time: null };
+        updateUI();
+
+        // İlçeleri Doldur
+        districtSelect.innerHTML = '<option value="">İlçe Seçiniz</option>';
+        if (cityCode && locationDB[cityCode]) {
+            districtSelect.disabled = false;
+            locationDB[cityCode].forEach(district => {
+                districtSelect.innerHTML += `<option value="${district}">${district}</option>`;
+            });
+        } else {
+            districtSelect.disabled = true;
+            districtSelect.innerHTML = '<option value="">Önce Şehir Seç</option>';
+        }
+    }
+
+    // 3. İlçe Değişimi -> Sahaları Getir
+    function handleDistrictChange() {
+        const district = document.getElementById('district-select').value;
+        state.district = district;
+        state.fieldId = null;
+        state.fieldPrice = 0;
+        state.time = null;
+        
+        updateUI();
+        renderFields(district);
+    }
+
+    // 4. Sahaları Render Et
+    function renderFields(district) {
+        const container = document.getElementById('fields-container');
+        const fields = fieldsDB[district] || fieldsDB["default"];
+
+        container.innerHTML = '';
+        
+        fields.forEach(field => {
+            const card = document.createElement('div');
+            card.className = `pitch-card cursor-pointer bg-slate-900 border-2 border-white/20 rounded-xl p-4 flex gap-4 transition-all hover:border-neonGreen/50 hover:bg-slate-800 relative`;
+            card.id = `field-${field.id}`;
+            card.onclick = () => selectPitch(field.id, field.price);
+            
+            card.innerHTML = `
+                <div class="w-24 h-24 bg-cover bg-center rounded-xl flex-shrink-0 relative" style="background-image: url('${field.img}');">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl"></div>
+                    <div class="absolute bottom-2 left-2 text-white text-xs font-bold bg-black/50 px-2 py-1 rounded">${field.type}</div>
+                </div>
+                <div class="flex-grow flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <h5 class="text-white font-bold text-base">${field.name}</h5>
+                            <i class="fa-solid fa-circle-check check-icon text-xl transition-all opacity-0"></i>
+                        </div>
+                        <div class="flex gap-2 flex-wrap">
+                            <span class="text-xs bg-slate-800 text-gray-300 px-2 py-1 rounded"><i class="fa-solid fa-users mr-1"></i>${field.players}</span>
+                            <span class="text-xs bg-slate-800 text-gray-300 px-2 py-1 rounded"><i class="fa-solid fa-futbol mr-1"></i>${field.turf}</span>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-neonGreen font-bold text-lg">₺${field.price}<span class="text-sm text-gray-400 font-normal"> / Saat</span></div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // 5. Saha Seçimi -> Saatleri Getir
+    function selectPitch(id, price) {
+        state.fieldId = id;
+        state.fieldPrice = price;
+        state.time = null;
+        
+        // Tüm kartları sıfırla
+        document.querySelectorAll('.pitch-card').forEach(el => {
+            el.classList.remove('border-neonGreen', 'bg-slate-800', 'shadow-[0_0_20px_rgba(57,255,20,0.3)]');
+            el.classList.add('border-white/20', 'bg-slate-900');
+            const icon = el.querySelector('.check-icon');
+            icon.classList.remove('text-neonGreen', 'opacity-100');
+            icon.classList.add('opacity-0');
+        });
+        
+        // Seçili kartı vurgula
+        const selected = document.getElementById(`field-${id}`);
+        selected.classList.remove('border-white/20', 'bg-slate-900');
+        selected.classList.add('border-neonGreen', 'bg-slate-800', 'shadow-[0_0_20px_rgba(57,255,20,0.3)]');
+        const icon = selected.querySelector('.check-icon');
+        icon.classList.remove('opacity-0');
+        icon.classList.add('text-neonGreen', 'opacity-100');
+
+        updateUI();
+        renderTimeSlots(id);
+    }
+
+    // 6. Saatleri Render Et
+    function renderTimeSlots(fieldId) {
+        const container = document.getElementById('time-slots-container');
+        const slots = schedulesDB[fieldId] || schedulesDB["default"];
+        
+        container.innerHTML = '';
+        
+        slots.forEach((slot, index) => {
+            const btn = document.createElement('button');
+            btn.setAttribute('data-time', slot.t);
+            
+            if (slot.f) {
+                // DOLU
+                btn.className = "p-3 rounded-xl bg-red-900/20 border-2 border-red-500/30 text-red-400 text-sm cursor-not-allowed opacity-50";
+                btn.innerHTML = `<div class="font-bold">${slot.t}</div><div class="text-xs mt-1">Dolu</div>`;
+                btn.disabled = true;
+            } else {
+                // MÜSAİT
+                btn.className = "time-btn p-3 rounded-xl bg-slate-900 border-2 border-white/20 text-white text-sm hover:border-neonGreen hover:bg-slate-800 transition-all cursor-pointer";
+                btn.innerHTML = `<div class="font-bold">${slot.t}</div><div class="text-xs text-green-400 mt-1">Müsait</div>`;
+                btn.onclick = () => selectTime(btn, slot.t);
+            }
+            container.appendChild(btn);
+        });
+    }
+
+    // 7. Saat Seçimi
+    function selectTime(btn, time) {
+        state.time = time;
+        
+        // Tüm müsait saatleri sıfırla
+        document.querySelectorAll('.time-btn').forEach(b => {
+            b.classList.remove('bg-neonGreen', 'border-neonGreen', 'text-slate-900', 'scale-105', 'shadow-[0_0_20px_rgba(57,255,20,0.5)]');
+            b.classList.add('bg-slate-900', 'border-white/20', 'text-white');
+            const timeText = b.getAttribute('data-time');
+            b.innerHTML = `<div class="font-bold">${timeText}</div><div class="text-xs text-green-400 mt-1">Müsait</div>`;
+        });
+        
+        // Seçili saati vurgula
+        btn.classList.remove('bg-slate-900', 'border-white/20', 'text-white');
+        btn.classList.add('bg-neonGreen', 'border-neonGreen', 'text-slate-900', 'scale-105', 'shadow-[0_0_20px_rgba(57,255,20,0.5)]');
+        btn.innerHTML = `<div class="font-bold">${time}</div><div class="text-xs mt-1">Seçildi</div>`;
+        
+        updateUI();
+    }
+
+    // 8. UI Güncelleme (Fiyat ve Bilgiler)
+    function updateUI() {
+        // Fiyat
+        document.getElementById('total-price').innerText = `₺${state.fieldPrice}`;
+        
+        // Seçilen Saat Bilgisi
+        const infoBox = document.getElementById('selectedTimeInfo');
+        if (state.time) {
+            infoBox.classList.remove('hidden');
+            document.getElementById('selectedTimeText').innerText = state.time;
+        } else {
+            infoBox.classList.add('hidden');
+        }
+    }
+
+    // 9. REZERVASYON ONAYI (VALIDASYON BURADA)
+    function confirmBooking() {
+        // Hata Kontrolleri
+        if (!state.city) {
+            showErrorToast("Şehir Seçilmedi", "Lütfen bir şehir seçiniz.");
+            return;
+        }
+        if (!state.district) {
+            showErrorToast("İlçe Seçilmedi", "Lütfen bir ilçe seçiniz.");
+            return;
+        }
+        if (!state.fieldId) {
+            showErrorToast("Saha Seçilmedi", "Lütfen oynamak istediğiniz sahayı seçiniz.");
+            return;
+        }
+        if (!state.time) {
+            showErrorToast("Saat Seçilmedi", "Lütfen uygun bir saat aralığı seçiniz.");
+            return;
+        }
+
+        // Başarılı
+        closeBookingModal();
+        
+        const toast = document.getElementById('booking-toast');
+        toast.style.transform = "translateX(0)";
+        setTimeout(() => {
+            toast.style.transform = "translateX(150%)";
+        }, 3000);
+    }
+
+    // Hata Toast Göster
+    function showErrorToast(title, message) {
+        const toast = document.getElementById('error-toast');
+        document.getElementById('error-toast-title').innerText = title;
+        document.getElementById('error-toast-message').innerText = message;
+        
+        toast.style.transform = "translateX(0)";
+        setTimeout(() => {
+            toast.style.transform = "translateX(150%)";
+        }, 3000);
+    }
+</script>
+</body>
+</html> 

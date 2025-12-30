@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StatsUp - Profilim</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        neonGreen: '#39ff14',
+                        darkBg: '#0f172a',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            overflow-x: hidden;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .achievement-badge {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .glow {
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.3);
+        }
+        .profile-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <nav class="fixed w-full z-50 top-0 start-0 border-b border-white/10 bg-slate-900/80 backdrop-blur-md">
+        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+            <a href="index.html" class="flex items-center space-x-3 rtl:space-x-reverse">
+                <span class="self-center text-2xl font-bold whitespace-nowrap text-white">Stats<span class="text-neonGreen">Up</span></span>
+            </a>
+            <div class="hidden w-full md:block md:w-auto" id="navbar-default">
+                <ul class="font-medium flex flex-col p-4 md:p-0 mt-4 border border-gray-100 rounded-lg md:flex-row md:space-x-8 md:items-center rtl:space-x-reverse md:mt-0 md:border-0">
+                    <li><a href="index.html#hero" class="block py-2 px-3 text-white hover:text-neonGreen md:py-2 md:px-0 transition-colors">Ana Sayfa</a></li>
+                    <li><a href="index.html#features" class="block py-2 px-3 text-white hover:text-neonGreen md:py-2 md:px-0 transition-colors">Özellikler</a></li>
+                    
+                    <!-- Guest Menu (Giriş Yapmamış Kullanıcı) -->
+                    <li id="guest-menu">
+                        <a href="login.html" class="inline-block py-2 px-4 text-neonGreen border border-neonGreen rounded hover:bg-neonGreen hover:text-slate-900 transition-all">Giriş Yap</a>
+                    </li>
+                    
+                    <!-- User Menu (Giriş Yapmış Kullanıcı) -->
+                    <li id="user-menu" class="hidden flex items-center gap-4">
+                        <a href="profile.html" class="block py-2 px-3 text-white hover:text-neonGreen md:py-2 md:px-0 transition-colors">
+                            <i class="fa-solid fa-user mr-2"></i>Hesabım
+                        </a>
+                        <button id="logoutBtn" class="text-red-500 hover:text-red-400 transition-colors py-2 px-3">
+                            <i class="fa-solid fa-sign-out-alt mr-2"></i>Çıkış Yap
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Content Section -->
+    <section class="min-h-screen pt-24 pb-12">
+        <div class="container mx-auto px-4 max-w-7xl">
+            
+            <!-- Profile Header -->
+            <div class="glass rounded-2xl p-8 mb-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-neonGreen/10 rounded-full blur-3xl"></div>
+                <div class="relative flex flex-col md:flex-row items-center md:items-start gap-8">
+                    <!-- Avatar -->
+                    <div class="profile-avatar w-32 h-32 rounded-full flex items-center justify-center relative overflow-hidden border-4 border-neonGreen/30">
+                        <img src="profile-photo.jpg" alt="Profil" class="w-full h-full object-cover">
+                        <div class="absolute -bottom-2 -right-2 bg-neonGreen w-10 h-10 rounded-full flex items-center justify-center border-4 border-slate-900">
+                            <i class="fa-solid fa-star text-slate-900 text-sm"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- User Info -->
+                    <div class="flex-grow text-center md:text-left">
+                        <h1 class="text-4xl font-bold text-white mb-2" id="userName">Yusuf Pekince</h1>
+                        <p class="text-gray-400 mb-4"><i class="fa-solid fa-at mr-2"></i>yusufpekince</p>
+                        
+                        <div class="flex flex-wrap gap-3 justify-center md:justify-start">
+                            <span id="displayPosition" class="bg-neonGreen/10 border border-neonGreen text-neonGreen px-4 py-2 rounded-full text-sm font-semibold">
+                                <i class="fa-solid fa-shield-halved mr-2"></i>Forvet
+                            </span>
+                            <span class="bg-blue-500/10 border border-blue-500 text-blue-400 px-4 py-2 rounded-full text-sm font-semibold">
+                                <i class="fa-solid fa-trophy mr-2"></i>Seviye 12
+                            </span>
+                            <span class="bg-purple-500/10 border border-purple-500 text-purple-400 px-4 py-2 rounded-full text-sm font-semibold">
+                                <i class="fa-solid fa-fire mr-2"></i>42 Maç
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Edit Button -->
+                    <button onclick="openEditModal()" class="bg-slate-700/50 hover:bg-slate-700 border border-white/20 px-6 py-3 rounded-xl transition-all">
+                        <i class="fa-solid fa-pen-to-square mr-2"></i>Düzenle
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Stat 1 -->
+                <div class="stat-card glass rounded-xl p-6 transition-all duration-300 hover:glow">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-full bg-neonGreen/20 flex items-center justify-center">
+                            <i class="fa-solid fa-futbol text-neonGreen text-xl"></i>
+                        </div>
+                        <span class="text-3xl font-bold text-neonGreen">28</span>
+                    </div>
+                    <h3 class="text-gray-400 text-sm uppercase">Gol</h3>
+                    <div class="mt-2 bg-slate-700/50 rounded-full h-2">
+                        <div class="bg-neonGreen h-2 rounded-full" style="width: 70%"></div>
+                    </div>
+                </div>
+
+                <!-- Stat 2 -->
+                <div class="stat-card glass rounded-xl p-6 transition-all duration-300 hover:glow">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                            <i class="fa-solid fa-hands-helping text-blue-400 text-xl"></i>
+                        </div>
+                        <span class="text-3xl font-bold text-blue-400">15</span>
+                    </div>
+                    <h3 class="text-gray-400 text-sm uppercase">Asist</h3>
+                    <div class="mt-2 bg-slate-700/50 rounded-full h-2">
+                        <div class="bg-blue-400 h-2 rounded-full" style="width: 45%"></div>
+                    </div>
+                </div>
+
+                <!-- Stat 3 -->
+                <div class="stat-card glass rounded-xl p-6 transition-all duration-300 hover:glow">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                            <i class="fa-solid fa-star text-yellow-400 text-xl"></i>
+                        </div>
+                        <span class="text-3xl font-bold text-yellow-400">8.5</span>
+                    </div>
+                    <h3 class="text-gray-400 text-sm uppercase">Ortalama Puan</h3>
+                    <div class="mt-2 bg-slate-700/50 rounded-full h-2">
+                        <div class="bg-yellow-400 h-2 rounded-full" style="width: 85%"></div>
+                    </div>
+                </div>
+
+                <!-- Stat 4 -->
+                <div class="stat-card glass rounded-xl p-6 transition-all duration-300 hover:glow">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
+                            <i class="fa-solid fa-chart-line text-purple-400 text-xl"></i>
+                        </div>
+                        <span class="text-3xl font-bold text-purple-400">%68</span>
+                    </div>
+                    <h3 class="text-gray-400 text-sm uppercase">Galibiyet Oranı</h3>
+                    <div class="mt-2 bg-slate-700/50 rounded-full h-2">
+                        <div class="bg-purple-400 h-2 rounded-full" style="width: 68%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Left Column - Personal Info & Settings -->
+                <div class="lg:col-span-12 space-y-6">
+                    
+                    <!-- Personal Information -->
+                    <div class="glass rounded-2xl p-6">
+                        <h2 class="text-2xl font-bold mb-6 border-l-4 border-neonGreen pl-4">
+                            <i class="fa-solid fa-id-card mr-3"></i>Kişisel Bilgiler
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-slate-800/50 rounded-xl p-4">
+                                <label class="text-xs text-gray-400 uppercase">Ad Soyad</label>
+                                <p class="text-white font-bold mt-1" id="displayFullName">Yusuf Pekince</p>
+                            </div>
+                            <div class="bg-slate-800/50 rounded-xl p-4">
+                                <label class="text-xs text-gray-400 uppercase">E-posta</label>
+                                <p class="text-white font-bold mt-1" id="displayEmail">yusufpekince2003@gmail.com</p>
+                            </div>
+                            <div class="bg-slate-800/50 rounded-xl p-4">
+                                <label class="text-xs text-gray-400 uppercase">Telefon</label>
+                                <p class="text-white font-bold mt-1" id="displayPhone">+90 5522051435</p>
+                            </div>
+                            <div class="bg-slate-800/50 rounded-xl p-4">
+                                <label class="text-xs text-gray-400 uppercase">Doğum Tarihi</label>
+                                <p class="text-white font-bold mt-1" id="displayBirthDate">9 Kasım 2003</p>
+                            </div>
+                            <div class="bg-slate-800/50 rounded-xl p-4">
+                                <label class="text-xs text-gray-400 uppercase">Üyelik Tarihi</label>
+                                <p class="text-white font-bold mt-1">12 Ocak 2024</p>
+                            </div>
+                            <div class="bg-slate-800/50 rounded-xl p-4">
+                                <label class="text-xs text-gray-400 uppercase">Şehir</label>
+                                <p class="text-white font-bold mt-1" id="displayCity">İstanbul, Türkiye</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Achievements Grid -->
+                    <div class="glass rounded-2xl p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold border-l-4 border-yellow-500 pl-4">
+                                <i class="fa-solid fa-trophy mr-3 text-yellow-500"></i>Başarımlar
+                            </h2>
+                            <span class="text-sm text-gray-400">15/50 Açıldı</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-6">
+                            <!-- Unlocked Achievement 1 -->
+                            <div class="achievement-badge text-center cursor-pointer hover:scale-110 transition-transform">
+                                <div class="w-20 h-20 mx-auto bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mb-2 shadow-lg">
+                                    <i class="fa-solid fa-fire text-3xl text-white"></i>
+                                </div>
+                                <p class="text-xs text-white font-bold">Ateş Topu</p>
+                                <p class="text-xs text-gray-500">10 Maç Üst Üste Gol</p>
+                            </div>
+
+                            <!-- Unlocked Achievement 2 -->
+                            <div class="achievement-badge text-center cursor-pointer hover:scale-110 transition-transform" style="animation-delay: 0.2s;">
+                                <div class="w-20 h-20 mx-auto bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center mb-2 shadow-lg">
+                                    <i class="fa-solid fa-crown text-3xl text-white"></i>
+                                </div>
+                                <p class="text-xs text-white font-bold">Hat-Trick Kralı</p>
+                                <p class="text-xs text-gray-500">3 Hat-Trick Yaptı</p>
+                            </div>
+
+                            <!-- Unlocked Achievement 3 -->
+                            <div class="achievement-badge text-center cursor-pointer hover:scale-110 transition-transform" style="animation-delay: 0.4s;">
+                                <div class="w-20 h-20 mx-auto bg-gradient-to-br from-blue-400 to-cyan-500 rounded-full flex items-center justify-center mb-2 shadow-lg">
+                                    <i class="fa-solid fa-star text-3xl text-white"></i>
+                                </div>
+                                <p class="text-xs text-white font-bold">MVP</p>
+                                <p class="text-xs text-gray-500">5 Kez Maçın Adamı</p>
+                            </div>
+
+                            <!-- Unlocked Achievement 4 -->
+                            <div class="achievement-badge text-center cursor-pointer hover:scale-110 transition-transform" style="animation-delay: 0.6s;">
+                                <div class="w-20 h-20 mx-auto bg-gradient-to-br from-green-400 to-teal-500 rounded-full flex items-center justify-center mb-2 shadow-lg">
+                                    <i class="fa-solid fa-bolt text-3xl text-white"></i>
+                                </div>
+                                <p class="text-xs text-white font-bold">Şimşek Hızı</p>
+                                <p class="text-xs text-gray-500">İlk 5 Dakika Gol</p>
+                            </div>
+
+                            <!-- Locked Achievement 1 -->
+                            <div class="text-center opacity-40 cursor-not-allowed">
+                                <div class="w-20 h-20 mx-auto bg-slate-700 rounded-full flex items-center justify-center mb-2">
+                                    <i class="fa-solid fa-lock text-2xl text-gray-500"></i>
+                                </div>
+                                <p class="text-xs text-gray-500">???</p>
+                                <p class="text-xs text-gray-600">Kilitli</p>
+                            </div>
+
+                            <!-- Locked Achievement 2 -->
+                            <div class="text-center opacity-40 cursor-not-allowed">
+                                <div class="w-20 h-20 mx-auto bg-slate-700 rounded-full flex items-center justify-center mb-2">
+                                    <i class="fa-solid fa-lock text-2xl text-gray-500"></i>
+                                </div>
+                                <p class="text-xs text-gray-500">???</p>
+                                <p class="text-xs text-gray-600">Kilitli</p>
+                            </div>
+
+                            <!-- Locked Achievement 3 -->
+                            <div class="text-center opacity-40 cursor-not-allowed">
+                                <div class="w-20 h-20 mx-auto bg-slate-700 rounded-full flex items-center justify-center mb-2">
+                                    <i class="fa-solid fa-lock text-2xl text-gray-500"></i>
+                                </div>
+                                <p class="text-xs text-gray-500">???</p>
+                                <p class="text-xs text-gray-600">Kilitli</p>
+                            </div>
+
+                            <!-- Locked Achievement 4 -->
+                            <div class="text-center opacity-40 cursor-not-allowed">
+                                <div class="w-20 h-20 mx-auto bg-slate-700 rounded-full flex items-center justify-center mb-2">
+                                    <i class="fa-solid fa-lock text-2xl text-gray-500"></i>
+                                </div>
+                                <p class="text-xs text-gray-500">???</p>
+                                <p class="text-xs text-gray-600">Kilitli</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-800/50 rounded-xl p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-400">İlerleme</span>
+                                <span class="text-sm text-neonGreen font-bold">30%</span>
+                            </div>
+                            <div class="bg-slate-700 rounded-full h-3">
+                                <div class="bg-gradient-to-r from-neonGreen to-green-500 h-3 rounded-full" style="width: 30%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Two Column Layout for Activity & Quick Actions -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        
+                        <!-- Activity Timeline -->
+                        <div class="glass rounded-2xl p-6">
+                            <h2 class="text-2xl font-bold mb-6 border-l-4 border-blue-500 pl-4">
+                                <i class="fa-solid fa-clock mr-3 text-blue-400"></i>Son Aktiviteler
+                            </h2>
+                            
+                            <div class="space-y-4">
+                                <div class="flex gap-4 items-start">
+                                    <div class="w-10 h-10 rounded-full bg-neonGreen/20 flex items-center justify-center flex-shrink-0">
+                                        <i class="fa-solid fa-trophy text-neonGreen"></i>
+                                    </div>
+                                    <div class="flex-grow">
+                                        <p class="text-white font-semibold">"Ateş Topu" başarımını kazandın!</p>
+                                        <p class="text-xs text-gray-400">2 saat önce</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex gap-4 items-start">
+                                    <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                                        <i class="fa-solid fa-futbol text-blue-400"></i>
+                                    </div>
+                                    <div class="flex-grow">
+                                        <p class="text-white font-semibold">Kadıköy Arena'da maç oynadın</p>
+                                        <p class="text-xs text-gray-400">5 saat önce</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex gap-4 items-start">
+                                    <div class="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                                        <i class="fa-solid fa-users text-purple-400"></i>
+                                    </div>
+                                    <div class="flex-grow">
+                                        <p class="text-white font-semibold">Takımına 2 yeni oyuncu ekledin</p>
+                                        <p class="text-xs text-gray-400">1 gün önce</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex gap-4 items-start">
+                                    <div class="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                                        <i class="fa-solid fa-star text-yellow-400"></i>
+                                    </div>
+                                    <div class="flex-grow">
+                                        <p class="text-white font-semibold">Seviye 12'ye ulaştın!</p>
+                                        <p class="text-xs text-gray-400">3 gün önce</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Links & Settings Combined -->
+                        <div class="space-y-6">
+                            
+                            <!-- Quick Links -->
+                            <div class="glass rounded-2xl p-6">
+                                <h2 class="text-xl font-bold mb-4 border-l-4 border-neonGreen pl-4">
+                                    <i class="fa-solid fa-link mr-3"></i>Hızlı Erişim
+                                </h2>
+                                
+                                <div class="space-y-3">
+                                    <a href="matches.html" class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition-all group">
+                                        <div class="w-10 h-10 rounded-lg bg-neonGreen/20 flex items-center justify-center group-hover:bg-neonGreen/30 transition-colors">
+                                            <i class="fa-solid fa-video text-neonGreen"></i>
+                                        </div>
+                                        <div class="flex-grow">
+                                            <p class="text-white font-semibold text-sm">Maçlarım</p>
+                                            <p class="text-xs text-gray-400">Tüm maçları görüntüle</p>
+                                        </div>
+                                        <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                                    </a>
+
+                                    <a href="stats.html" class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition-all group">
+                                        <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                                            <i class="fa-solid fa-chart-line text-blue-400"></i>
+                                        </div>
+                                        <div class="flex-grow">
+                                            <p class="text-white font-semibold text-sm">İstatistiklerim</p>
+                                            <p class="text-xs text-gray-400">Detaylı analiz</p>
+                                        </div>
+                                        <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                                    </a>
+
+                                    <a href="team.html" class="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition-all group">
+                                        <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
+                                            <i class="fa-solid fa-people-group text-purple-400"></i>
+                                        </div>
+                                        <div class="flex-grow">
+                                            <p class="text-white font-semibold text-sm">Takımım</p>
+                                            <p class="text-xs text-gray-400">Kadro yönetimi</p>
+                                        </div>
+                                        <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Preferences -->
+                            <div class="glass rounded-2xl p-6">
+                                <h2 class="text-xl font-bold mb-4 border-l-4 border-purple-500 pl-4">
+                                    <i class="fa-solid fa-sliders mr-3 text-purple-400"></i>Tercihler
+                                </h2>
+                                
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <p class="text-white font-semibold text-sm">E-posta Bildirimleri</p>
+                                            <p class="text-xs text-gray-400">Maç davetleri ve güncellemeler</p>
+                                        </div>
+                                        <label class="relative inline-block w-12 h-6">
+                                            <input type="checkbox" checked class="sr-only peer">
+                                            <div class="w-full h-full bg-slate-700 peer-checked:bg-neonGreen rounded-full peer-checked:after:translate-x-6 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all cursor-pointer"></div>
+                                        </label>
+                                    </div>
+
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <p class="text-white font-semibold text-sm">Profil Gizliliği</p>
+                                            <p class="text-xs text-gray-400">Profili herkese açık yap</p>
+                                        </div>
+                                        <label class="relative inline-block w-12 h-6">
+                                            <input type="checkbox" class="sr-only peer">
+                                            <div class="w-full h-full bg-slate-700 peer-checked:bg-neonGreen rounded-full peer-checked:after:translate-x-6 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all cursor-pointer"></div>
+                                        </label>
+                                    </div>
+
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <p class="text-white font-semibold text-sm">Otomatik Kayıt</p>
+                                            <p class="text-xs text-gray-400">Maçları otomatik kaydet</p>
+                                        </div>
+                                        <label class="relative inline-block w-12 h-6">
+                                            <input type="checkbox" checked class="sr-only peer">
+                                            <div class="w-full h-full bg-slate-700 peer-checked:bg-neonGreen rounded-full peer-checked:after:translate-x-6 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all cursor-pointer"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Account Actions -->
+                            <div class="glass rounded-2xl p-6">
+                                <h2 class="text-xl font-bold mb-4 border-l-4 border-red-500 pl-4">
+                                    <i class="fa-solid fa-gear mr-3 text-red-400"></i>Hesap İşlemleri
+                                </h2>
+                                
+                                <div class="space-y-3">
+                                    <button onclick="openPasswordModal()" class="w-full bg-slate-800/50 hover:bg-slate-800 border border-white/20 py-3 rounded-xl transition-all text-left px-4">
+                                        <i class="fa-solid fa-key mr-3 text-yellow-400"></i>Şifre Değiştir
+                                    </button>
+                                    <button onclick="downloadData()" class="w-full bg-slate-800/50 hover:bg-slate-800 border border-white/20 py-3 rounded-xl transition-all text-left px-4">
+                                        <i class="fa-solid fa-download mr-3 text-blue-400"></i>Verilerimi İndir
+                                    </button>
+                                    <button onclick="deleteAccount()" class="w-full bg-red-900/20 hover:bg-red-900/30 border border-red-500/30 py-3 rounded-xl transition-all text-left px-4 text-red-400">
+                                        <i class="fa-solid fa-trash mr-3"></i>Hesabı Sil
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- Right Sidebar - REMOVED -->
+                <!-- All content moved to left column in organized 2-column layout -->
+
+            </div>
+
+        </div>
+    </section>
+
+    <footer class="py-8 border-t border-white/10 text-center text-gray-500 text-sm">
+        <p>&copy; 2025 StatsUp. Yönetim Bilişim Sistemleri Gururla Sunar.</p>
+    </footer>
+
+    <!-- Password Change Modal -->
+    <div id="passwordModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-2xl p-8 max-w-md w-full border border-white/10 shadow-2xl">
+            <h2 class="text-2xl font-bold text-white mb-6 border-l-4 border-neonGreen pl-4">
+                <i class="fa-solid fa-key mr-3 text-neonGreen"></i>Şifre Değiştir
+            </h2>
+            
+            <form onsubmit="changePassword(event)" class="space-y-4">
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Mevcut Şifre</label>
+                    <input type="password" id="currentPassword" required class="w-full bg-slate-800 border border-white/20 text-white rounded-xl px-4 py-3 focus:border-neonGreen outline-none">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Yeni Şifre</label>
+                    <input type="password" id="newPassword" required minlength="6" class="w-full bg-slate-800 border border-white/20 text-white rounded-xl px-4 py-3 focus:border-neonGreen outline-none">
+                    <p class="text-xs text-gray-500 mt-1">Minimum 6 karakter</p>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Yeni Şifre (Tekrar)</label>
+                    <input type="password" id="confirmPassword" required minlength="6" class="w-full bg-slate-800 border border-white/20 text-white rounded-xl px-4 py-3 focus:border-neonGreen outline-none">
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="closePasswordModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl transition-all">
+                        İptal
+                    </button>
+                    <button type="submit" class="flex-1 bg-neonGreen hover:bg-green-400 text-slate-900 font-bold py-3 rounded-xl transition-all">
+                        Değiştir
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success Toast -->
+    <div id="successToast" class="fixed top-24 right-4 z-[10000] bg-slate-800 border-l-4 border-neonGreen text-white p-4 rounded-lg shadow-2xl transform translate-x-full transition-transform duration-500 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-neonGreen/20 flex items-center justify-center text-neonGreen">
+            <i class="fa-solid fa-check text-xl"></i>
+        </div>
+        <div>
+            <h4 class="font-bold" id="successToastTitle">Başarılı!</h4>
+            <p class="text-sm text-gray-300" id="successToastMessage">İşlem tamamlandı.</p>
+        </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div id="errorToast" class="fixed top-24 right-4 z-[10000] bg-slate-800 border-l-4 border-red-500 text-white p-4 rounded-lg shadow-2xl transform translate-x-full transition-transform duration-500 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-500">
+            <i class="fa-solid fa-exclamation-triangle text-xl"></i>
+        </div>
+        <div>
+            <h4 class="font-bold" id="errorToastTitle">Hata!</h4>
+            <p class="text-sm text-gray-300" id="errorToastMessage">Bir hata oluştu.</p>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-2xl p-8 max-w-2xl w-full border border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold text-white mb-6 border-l-4 border-neonGreen pl-4">
+                <i class="fa-solid fa-pen-to-square mr-3 text-neonGreen"></i>Profili Düzenle
+            </h2>
+            
+            <form onsubmit="saveProfile(event)" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-400 text-sm mb-2">Ad Soyad</label>
+                        <input type="text" id="editFullName" required class="w-full bg-slate-800 border border-white/20 text-white rounded-xl px-4 py-3 focus:border-neonGreen outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-400 text-sm mb-2">Kullanıcı Adı</label>
+                        <input type="text" id="editUsername" required class="w-full bg-slate-800 border border-white/20 text-white rounded-xl px-4 py-3 focus:border-neonGreen outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-400 text-sm mb-2">E-posta</label>
+                        <input type="email" id="editEmail" required class="w-full bg-slate-800 border border-white/20 text-white rounded-xl px-4 py-3 focus:border-neonGreen outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-400 text-sm mb-2">Telefon</label>
+                        <input type="tel" id="editPhone" class="w-full bg-slate-800 border border-white/20 text-white rounded-xl px-4 py-3 focus:border-neonGreen outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-400 text-sm mb-2">Doğum Tarihi</label>
+                        <input type="date" id="editBirthDate" class="w-full bg-slate-800 border border-white/20 text-white rounded-xl px-4 py-3 focus:border-neonGreen outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-400 text-sm mb-2">Şehir</label>
+                        <input type="text" id="editCity" class="w-full bg-slate-800 border border-white/20 text-white rounded-xl px-4 py-3 focus:border-neonGreen outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Favori Pozisyon</label>
+                    <select id="editPosition" class="w-full bg-slate-800 border border-white/20 text-white rounded-xl px-4 py-3 focus:border-neonGreen outline-none">
+                        <option value="Forvet">Forvet</option>
+                        <option value="Orta Saha">Orta Saha</option>
+                        <option value="Defans">Defans</option>
+                        <option value="Kaleci">Kaleci</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="closeEditModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl transition-all">
+                        İptal
+                    </button>
+                    <button type="submit" class="flex-1 bg-neonGreen hover:bg-green-400 text-slate-900 font-bold py-3 rounded-xl transition-all">
+                        Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Account Confirmation Modal -->
+    <div id="deleteAccountModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-2xl p-8 max-w-md w-full border-2 border-red-500/30 shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="w-20 h-20 mx-auto bg-red-500/20 rounded-full flex items-center justify-center mb-4">
+                    <i class="fa-solid fa-trash text-4xl text-red-500"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-2">Hesabı Sil</h2>
+                <p class="text-gray-400">Bu işlem geri alınamaz!</p>
+            </div>
+            
+            <div class="bg-red-900/20 border border-red-500/30 rounded-xl p-4 mb-6">
+                <p class="text-white text-sm mb-3">
+                    <i class="fa-solid fa-exclamation-circle text-red-400 mr-2"></i>
+                    Hesabınızı silmek istediğinizden emin misiniz?
+                </p>
+                <ul class="text-sm text-gray-400 space-y-1 ml-6">
+                    <li>• Tüm maç kayıtlarınız silinecek</li>
+                    <li>• İstatistikleriniz kaybolacak</li>
+                    <li>• Takım bilgileriniz silinecek</li>
+                    <li>• Bu işlem geri alınamaz</li>
+                </ul>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeDeleteModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-xl transition-all">
+                    <i class="fa-solid fa-times mr-2"></i>İptal
+                </button>
+                <button onclick="confirmDelete()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-all">
+                    <i class="fa-solid fa-trash mr-2"></i>Evet, Eminim
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Login Status Kontrolü - Navbar Menu Toggle
+        window.addEventListener('DOMContentLoaded', function() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            const guestMenu = document.getElementById('guest-menu');
+            const userMenu = document.getElementById('user-menu');
+            
+            if (isLoggedIn === 'true') {
+                guestMenu.classList.add('hidden');
+                userMenu.classList.remove('hidden');
+                
+                // localStorage'dan profil bilgilerini yükle ve sayfaya yerleştir
+                loadProfileData();
+                
+                // GSAP Animasyonları
+                gsap.from('.profile-avatar', { scale: 0, rotation: 360, duration: 0.8, ease: 'back.out(1.7)' });
+                gsap.from('#userName', { x: -50, opacity: 0, duration: 0.6, delay: 0.3 });
+                gsap.from('.achievement-badge', { scale: 0, opacity: 0, duration: 0.5, stagger: 0.1, delay: 0.8, ease: 'back.out(1.7)' });
+                gsap.from('.glass', { y: 30, opacity: 0, duration: 0.6, stagger: 0.15, delay: 0.5 });
+            } else {
+                guestMenu.classList.remove('hidden');
+                userMenu.classList.add('hidden');
+                alert('Bu sayfayı görüntülemek için giriş yapmalısınız!');
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Profil bilgilerini localStorage'dan yükle
+        function loadProfileData() {
+            const storedUser = localStorage.getItem('statsup_user');
+            
+            if (storedUser) {
+                const userData = JSON.parse(storedUser);
+                
+                // Eğer kullanıcı daha önce profil bilgilerini güncellemişse, sayfaya yerleştir
+                if (userData.fullName) {
+                    document.getElementById('userName').innerText = userData.fullName;
+                    document.getElementById('displayFullName').innerText = userData.fullName;
+                }
+                
+                if (userData.email) {
+                    document.getElementById('displayEmail').innerText = userData.email;
+                }
+                
+                if (userData.phone) {
+                    document.getElementById('displayPhone').innerText = userData.phone;
+                }
+                
+                if (userData.birthDate) {
+                    // Tarihi formatla
+                    const dateObj = new Date(userData.birthDate);
+                    const day = dateObj.getDate();
+                    const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+                    const month = months[dateObj.getMonth()];
+                    const year = dateObj.getFullYear();
+                    document.getElementById('displayBirthDate').innerText = `${day} ${month} ${year}`;
+                }
+                
+                if (userData.city) {
+                    document.getElementById('displayCity').innerText = userData.city;
+                }
+                
+                if (userData.username) {
+                    const usernameElement = document.querySelector('p.text-gray-400');
+                    if (usernameElement) {
+                        usernameElement.innerHTML = `<i class="fa-solid fa-at mr-2"></i>${userData.username}`;
+                    }
+                }
+                
+                if (userData.position) {
+                    const positionBadge = document.getElementById('displayPosition');
+                    if (positionBadge) {
+                        positionBadge.innerHTML = `<i class="fa-solid fa-shield-halved mr-2"></i>${userData.position}`;
+                    }
+                }
+            }
+        }
+
+        // Logout İşlemi
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function() {
+                localStorage.removeItem('isLoggedIn');
+                window.location.href = 'login.html';
+            });
+        }
+
+        // Edit Profile Modal Functions
+        function openEditModal() {
+            // Sayfadaki mevcut bilgileri forma doldur
+            const fullName = document.getElementById('displayFullName').innerText;
+            const email = document.getElementById('displayEmail').innerText;
+            const phone = document.getElementById('displayPhone').innerText;
+            const birthDateText = document.getElementById('displayBirthDate').innerText;
+            const city = document.getElementById('displayCity').innerText;
+            const usernameText = document.querySelector('p.text-gray-400 i.fa-at').parentElement.innerText.replace('@', '').trim();
+            const positionElement = document.getElementById('displayPosition');
+            const positionText = positionElement ? positionElement.innerText.trim() : 'Forvet';
+            
+            // Tarih formatını dönüştür ("9 Kasım 2003" -> "2003-11-09")
+            let birthDateISO = '2003-11-09'; // default
+            if (birthDateText.includes('Kasım')) {
+                const parts = birthDateText.split(' ');
+                const day = parts[0].padStart(2, '0');
+                const year = parts[2];
+                birthDateISO = `${year}-11-${day}`;
+            }
+            
+            document.getElementById('editFullName').value = fullName;
+            document.getElementById('editUsername').value = usernameText;
+            document.getElementById('editEmail').value = email;
+            document.getElementById('editPhone').value = phone;
+            document.getElementById('editBirthDate').value = birthDateISO;
+            document.getElementById('editCity').value = city;
+            document.getElementById('editPosition').value = positionText;
+            
+            document.getElementById('editProfileModal').classList.remove('hidden');
+            gsap.from('#editProfileModal > div', { scale: 0.9, opacity: 0, duration: 0.3 });
+        }
+
+        function closeEditModal() {
+            const modal = document.getElementById('editProfileModal');
+            gsap.to('#editProfileModal > div', { 
+                scale: 0.9, 
+                opacity: 0, 
+                duration: 0.2,
+                onComplete: () => modal.classList.add('hidden')
+            });
+        }
+
+        function saveProfile(event) {
+            event.preventDefault();
+            
+            // Form verilerini al
+            const fullName = document.getElementById('editFullName').value;
+            const username = document.getElementById('editUsername').value;
+            const email = document.getElementById('editEmail').value;
+            const phone = document.getElementById('editPhone').value;
+            const birthDate = document.getElementById('editBirthDate').value;
+            const city = document.getElementById('editCity').value;
+            const position = document.getElementById('editPosition').value;
+
+            // Tarihi formatla ("2003-11-09" -> "9 Kasım 2003")
+            let formattedDate = birthDate;
+            if (birthDate) {
+                const dateObj = new Date(birthDate);
+                const day = dateObj.getDate();
+                const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+                const month = months[dateObj.getMonth()];
+                const year = dateObj.getFullYear();
+                formattedDate = `${day} ${month} ${year}`;
+            }
+            
+            // Sayfadaki tüm ilgili bilgileri güncelle
+            document.getElementById('userName').innerText = fullName;
+            document.getElementById('displayFullName').innerText = fullName;
+            document.getElementById('displayEmail').innerText = email;
+            document.getElementById('displayPhone').innerText = phone;
+            document.getElementById('displayBirthDate').innerText = formattedDate;
+            document.getElementById('displayCity').innerText = city;
+            
+            // Kullanıcı adını güncelle
+            const usernameElement = document.querySelector('p.text-gray-400');
+            if (usernameElement) {
+                usernameElement.innerHTML = `<i class="fa-solid fa-at mr-2"></i>${username}`;
+            }
+            
+            // Pozisyonu güncelle
+            const positionBadge = document.getElementById('displayPosition');
+            if (positionBadge) {
+                positionBadge.innerHTML = `<i class="fa-solid fa-shield-halved mr-2"></i>${position}`;
+            }
+
+            // localStorage'a da kaydet
+            const storedUser = localStorage.getItem('statsup_user');
+            let userData = storedUser ? JSON.parse(storedUser) : {};
+            
+            userData = { 
+                ...userData, 
+                fullName, 
+                username, 
+                email, 
+                phone, 
+                birthDate, 
+                city, 
+                position 
+            };
+            
+            localStorage.setItem('statsup_user', JSON.stringify(userData));
+            
+            closeEditModal();
+            showSuccessToast('Profil Güncellendi', 'Bilgileriniz başarıyla kaydedildi.');
+        }
+
+        // Password Modal Functions
+        function openPasswordModal() {
+            document.getElementById('passwordModal').classList.remove('hidden');
+            gsap.from('#passwordModal > div', { scale: 0.9, opacity: 0, duration: 0.3 });
+        }
+
+        function closePasswordModal() {
+            const modal = document.getElementById('passwordModal');
+            gsap.to('#passwordModal > div', { 
+                scale: 0.9, 
+                opacity: 0, 
+                duration: 0.2,
+                onComplete: () => modal.classList.add('hidden')
+            });
+        }
+
+        function changePassword(event) {
+            event.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Yeni şifre kontrolü
+            if (newPassword !== confirmPassword) {
+                showErrorToast('Şifreler Eşleşmiyor', 'Girdiğiniz yeni şifreler birbiriyle eşleşmiyor.');
+                return;
+            }
+
+            // localStorage'dan kullanıcı bilgilerini al
+            const storedUser = localStorage.getItem('statsup_user');
+            
+            if (!storedUser) {
+                showErrorToast('Kullanıcı Bulunamadı', 'Oturum bilgileriniz bulunamadı.');
+                return;
+            }
+
+            const userData = JSON.parse(storedUser);
+
+            // Mevcut şifre kontrolü
+            if (userData.password !== currentPassword) {
+                showErrorToast('Yanlış Şifre', 'Mevcut şifreniz doğru değil.');
+                return;
+            }
+
+            // Şifreyi güncelle
+            userData.password = newPassword;
+            localStorage.setItem('statsup_user', JSON.stringify(userData));
+
+            // Başarılı
+            closePasswordModal();
+            showSuccessToast('Şifre Değiştirildi', 'Şifreniz başarıyla güncellendi.');
+            
+            // Reset form
+            event.target.reset();
+        }
+
+        // Toast Functions
+        function showSuccessToast(title, message) {
+            const toast = document.getElementById('successToast');
+            document.getElementById('successToastTitle').innerText = title;
+            document.getElementById('successToastMessage').innerText = message;
+            
+            toast.style.transform = "translateX(0)";
+            setTimeout(() => {
+                toast.style.transform = "translateX(150%)";
+            }, 4000);
+        }
+
+        function showErrorToast(title, message) {
+            const toast = document.getElementById('errorToast');
+            document.getElementById('errorToastTitle').innerText = title;
+            document.getElementById('errorToastMessage').innerText = message;
+            
+            toast.style.transform = "translateX(0)";
+            setTimeout(() => {
+                toast.style.transform = "translateX(150%)";
+            }, 4000);
+        }
+
+        // Data Download Function
+        function downloadData() {
+            showSuccessToast('Veriler Hazırlanıyor', 'Verileriniz e-posta adresinize gönderilecektir.');
+        }
+
+        // Delete Account Functions
+        function deleteAccount() {
+            document.getElementById('deleteAccountModal').classList.remove('hidden');
+            gsap.from('#deleteAccountModal > div', { scale: 0.9, opacity: 0, duration: 0.3 });
+        }
+
+        function closeDeleteModal() {
+            const modal = document.getElementById('deleteAccountModal');
+            gsap.to('#deleteAccountModal > div', { 
+                scale: 0.9, 
+                opacity: 0, 
+                duration: 0.2,
+                onComplete: () => modal.classList.add('hidden')
+            });
+        }
+
+        function confirmDelete() {
+            // Hesap silme işlemi - localStorage temizle (gerçekte silmeden)
+            localStorage.removeItem('isLoggedIn');
+            
+            closeDeleteModal();
+            showSuccessToast('Hesap Silindi', 'Giriş sayfasına yönlendiriliyorsunuz...');
+            
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StatsUp - Amatör Ruh, Profesyonel Analiz</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <!-- Electric Border CSS -->
+    <link rel="stylesheet" href="electric-border.css">
+
+    <!-- Three.js for Liquid Ether Effect -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        neonGreen: '#39ff14',
+                        darkBg: '#0f172a',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #0f172a;
+            color: white;
+            overflow-x: hidden;
+        }
+        /* Glassmorphism Genel Sınıfı */
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        /* Liquid Ether Background */
+        .liquid-ether-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: none;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .liquid-ether-container canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        /* Ensure content is above background */
+        nav, section, footer {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Animated Gradient Text */
+        .animated-gradient-text {
+            position: relative;
+            margin: 0 auto;
+            display: flex;
+            max-width: fit-content;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            border-radius: 1.25rem;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            transition: box-shadow 0.5s ease-out;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .gradient-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-size: 300% 100%;
+            animation: gradient linear infinite;
+            border-radius: inherit;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .gradient-overlay::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            border-radius: inherit;
+            width: calc(100% - 2px);
+            height: calc(100% - 2px);
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #060010;
+            z-index: -1;
+        }
+        
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        
+        .text-content {
+            display: inline-block;
+            position: relative;
+            z-index: 2;
+            background-size: 300% 100%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            animation: gradient linear infinite;
+        }
+        
+        /* True Focus Effect */
+        .focus-container {
+            position: relative;
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            align-items: stretch;
+            flex-wrap: wrap;
+            outline: none;
+            user-select: none;
+        }
+        
+        .focus-word {
+            position: relative;
+            transition: filter 0.5s ease;
+            outline: none;
+            user-select: none;
+        }
+        
+        .focus-word.active {
+            filter: blur(0);
+        }
+        
+        .focus-frame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            box-sizing: border-box;
+            border: none;
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+        
+        .focus-frame.active {
+            opacity: 1;
+        }
+        
+        .corner {
+            position: absolute;
+            width: 1rem;
+            height: 1rem;
+            border: 3px solid var(--border-color, #39ff14);
+            filter: drop-shadow(0px 0px 8px var(--glow-color, rgba(57, 255, 20, 0.6)));
+            border-radius: 3px;
+            transition: none;
+        }
+        
+        .top-left {
+            top: -10px;
+            left: -10px;
+            border-right: none;
+            border-bottom: none;
+        }
+        
+        .top-right {
+            top: -10px;
+            right: -10px;
+            border-left: none;
+            border-bottom: none;
+        }
+        
+        .bottom-left {
+            bottom: -10px;
+            left: -10px;
+            border-right: none;
+            border-top: none;
+        }
+        
+        .bottom-right {
+            bottom: -10px;
+            right: -10px;
+            border-left: none;
+            border-top: none;
+        }
+        
+        /* Modal Styles */
+        .legal-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .legal-modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid rgba(57, 255, 20, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 0 40px rgba(57, 255, 20, 0.2);
+            animation: slideUp 0.3s ease;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(57, 255, 20, 0.2);
+        }
+        
+        .modal-title {
+            font-size: 1.75rem;
+            font-weight: bold;
+            color: #39ff14;
+            text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .modal-close:hover {
+            color: #39ff14;
+            background: rgba(57, 255, 20, 0.1);
+            transform: rotate(90deg);
+        }
+        
+        .modal-body {
+            color: #cbd5e1;
+            line-height: 1.8;
+        }
+        
+        .modal-body h3 {
+            color: #fff;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .modal-body p {
+            margin-bottom: 1rem;
+        }
+        
+        .modal-body ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .modal-body ul li {
+            padding-left: 1.5rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        
+        .modal-body ul li:before {
+            content: "▸";
+            color: #39ff14;
+            position: absolute;
+            left: 0;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Liquid Ether Background -->
+    <div id="liquidEtherBg" class="liquid-ether-container"></div>
+
+    <!-- Legal Modals -->
+    <!-- Kullanım Şartları Modal -->
+    <div id="termsModal" class="legal-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Kullanım Şartları</h2>
+                <button class="modal-close" onclick="closeLegalModal('termsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Son Güncelleme:</strong> 25 Aralık 2025</p>
+                
+                <h3>1. Genel Koşullar</h3>
+                <p>StatsUp platformunu kullanarak aşağıdaki şartları kabul etmiş sayılırsınız. Bu hizmet amatör futbol takımları için istatistik ve analiz hizmeti sunmaktadır.</p>
+                
+                <h3>2. Hesap Sorumluluğu</h3>
+                <ul>
+                    <li>Hesap bilgilerinizin gizliliğinden siz sorumlusunuz</li>
+                    <li>18 yaşından büyük olmanız gerekmektedir</li>
+                    <li>Gerçek ve doğru bilgiler vermelisiniz</li>
+                    <li>Hesabınızda gerçekleşen tüm aktivitelerden sorumlusunuz</li>
+                </ul>
+                
+                <h3>3. Hizmet Kullanımı</h3>
+                <ul>
+                    <li>Platform sadece yasal amaçlar için kullanılabilir</li>
+                    <li>Üçüncü şahısların verilerini izinsiz paylaşamazsınız</li>
+                    <li>Sistemde zararlı yazılım veya kod çalıştıramazsınız</li>
+                    <li>Platformu kötüye kullanamazsınız</li>
+                </ul>
+                
+                <h3>4. Fikri Mülkiyet</h3>
+                <p>StatsUp platformundaki tüm içerik, tasarım ve yazılımlar telif hakkı ile korunmaktadır. İzinsiz kullanım yasaktır.</p>
+                
+                <h3>5. Hizmet Değişiklikleri</h3>
+                <p>StatsUp, hizmeti önceden haber vermeksizin değiştirme, askıya alma veya sonlandırma hakkını saklı tutar.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gizlilik Politikası Modal -->
+    <div id="privacyModal" class="legal-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Gizlilik Politikası</h2>
+                <button class="modal-close" onclick="closeLegalModal('privacyModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Son Güncelleme:</strong> 25 Aralık 2025</p>
+                
+                <h3>1. Toplanan Bilgiler</h3>
+                <p>StatsUp olarak aşağıdaki bilgileri topluyoruz:</p>
+                <ul>
+                    <li>Ad, soyad ve e-posta adresi</li>
+                    <li>Takım ve oyuncu bilgileri</li>
+                    <li>Maç istatistikleri ve performans verileri</li>
+                    <li>Platform kullanım bilgileri</li>
+                </ul>
+                
+                <h3>2. Bilgilerin Kullanımı</h3>
+                <p>Topladığımız bilgiler şu amaçlarla kullanılır:</p>
+                <ul>
+                    <li>Hizmet kalitesini artırmak</li>
+                    <li>Kişiselleştirilmiş deneyim sunmak</li>
+                    <li>İstatistiksel analizler yapmak</li>
+                    <li>Teknik destek sağlamak</li>
+                    <li>Platform güvenliğini sağlamak</li>
+                </ul>
+                
+                <h3>3. Veri Güvenliği</h3>
+                <p>Verileriniz endüstri standartlarında şifreleme ve güvenlik protokolleri ile korunmaktadır. Verilerinizi üçüncü şahıslarla paylaşmıyoruz.</p>
+                
+                <h3>4. Çerezler</h3>
+                <p>Platform deneyiminizi iyileştirmek için çerezler kullanıyoruz. Detaylı bilgi için Çerezler politikamızı inceleyebilirsiniz.</p>
+                
+                <h3>5. Kullanıcı Hakları</h3>
+                <ul>
+                    <li>Verilerinize erişim hakkı</li>
+                    <li>Verilerin düzeltilmesini talep etme</li>
+                    <li>Verilerin silinmesini talep etme</li>
+                    <li>Veri işleme faaliyetlerine itiraz etme</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Çerezler Modal -->
+    <div id="cookiesModal" class="legal-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Çerez Politikası</h2>
+                <button class="modal-close" onclick="closeLegalModal('cookiesModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Son Güncelleme:</strong> 25 Aralık 2025</p>
+                
+                <h3>1. Çerez Nedir?</h3>
+                <p>Çerezler, web sitelerini ziyaret ettiğinizde cihazınıza kaydedilen küçük metin dosyalarıdır. Platform deneyiminizi geliştirmek ve hizmetlerimizi optimize etmek için kullanılır.</p>
+                
+                <h3>2. Kullandığımız Çerez Türleri</h3>
+                
+                <p><strong>Zorunlu Çerezler:</strong></p>
+                <ul>
+                    <li>Oturum yönetimi (giriş durumu)</li>
+                    <li>Güvenlik çerezleri</li>
+                    <li>Temel platform işlevselliği</li>
+                </ul>
+                
+                <p><strong>Performans Çerezleri:</strong></p>
+                <ul>
+                    <li>Sayfa yükleme süreleri</li>
+                    <li>Kullanıcı etkileşim metrikleri</li>
+                    <li>Hata raporlama</li>
+                </ul>
+                
+                <p><strong>İşlevsellik Çerezleri:</strong></p>
+                <ul>
+                    <li>Dil tercihleri</li>
+                    <li>Tema ayarları</li>
+                    <li>Kullanıcı özelleştirmeleri</li>
+                </ul>
+                
+                <h3>3. Çerez Yönetimi</h3>
+                <p>Tarayıcı ayarlarınızdan çerezleri yönetebilir, silebilir veya engelleyebilirsiniz. Ancak bazı çerezleri devre dışı bırakmanız platform işlevselliğini etkileyebilir.</p>
+                
+                <h3>4. Üçüncü Taraf Çerezler</h3>
+                <p>Analitik ve performans ölçümü için Google Analytics gibi üçüncü taraf servisleri kullanabiliyoruz. Bu servisler kendi çerez politikalarına tabidir.</p>
+            </div>
+        </div>
+    </div>
+
+    <nav class="fixed w-full z-50 top-0 start-0 border-b border-white/10 bg-slate-900/80 backdrop-blur-md">
+        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+            <a href="#" class="flex items-center space-x-3 rtl:space-x-reverse">
+                <img src="statsup-logo.png?v=2" alt="StatsUp Logo" class="h-12 w-auto">
+                <span class="self-center text-2xl font-bold whitespace-nowrap text-white">Stats<span class="text-neonGreen">Up</span></span>
+            </a>
+            <div class="hidden w-full md:block md:w-auto">
+                <ul class="font-medium flex flex-col p-4 md:p-0 mt-4 border border-gray-100 rounded-lg md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 items-center">
+                    <li><a href="#hero" class="block py-2 px-3 text-white hover:text-neonGreen md:p-0 transition-colors">Ana Sayfa</a></li>
+                    <li><a href="#features" class="block py-2 px-3 text-white hover:text-neonGreen md:p-0 transition-colors">Özellikler</a></li>
+                    
+                    <!-- Guest Menu (Giriş Yapmamış Kullanıcı) -->
+                    <li id="guest-menu">
+                        <a href="login.html" class="block py-2 px-3 text-neonGreen border border-neonGreen rounded hover:bg-neonGreen hover:text-slate-900 transition-all">Giriş Yap</a>
+                    </li>
+                    
+                    <!-- User Menu (Giriş Yapmış Kullanıcı) -->
+                    <li id="user-menu" class="hidden flex items-center gap-4">
+                        <a href="dashboard.html" class="flex items-center text-white hover:text-neonGreen transition-colors">
+                            <i class="fa-solid fa-user mr-2"></i> Hesabım
+                        </a>
+                        <button id="logoutBtn" class="text-red-500 hover:text-red-400 transition-colors">
+                            <i class="fa-solid fa-sign-out-alt mr-2"></i> Çıkış Yap
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section id="hero" class="relative h-screen flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=1935&auto=format&fit=crop')] bg-cover bg-center opacity-20"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/80 to-transparent"></div>
+
+        <div class="relative z-10 text-center px-4 max-w-5xl mx-auto mt-16">
+            <!-- Ana Başlık: StatsUp -->
+            <h1 class="text-7xl md:text-9xl font-extrabold mb-4 tracking-tight animated-gradient-text">
+                <span class="text-content" style="background-image: linear-gradient(to right, #40ffaa, #4079ff, #40ffaa, #4079ff, #40ffaa); animation-duration: 8s;">
+                    StatsUp
+                </span>
+            </h1>
+            
+            <!-- Slogan -->
+            <h2 class="text-4xl md:text-6xl font-bold mb-8 tracking-tight">
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-neonGreen to-cyan-400 drop-shadow-[0_0_15px_rgba(57,255,20,0.5)]">
+                    Amatör Ruh, Profesyonel Analiz
+                </span>
+            </h2>
+            
+            <!-- Açıklama -->
+            <p class="text-lg md:text-xl text-gray-300 mb-10 max-w-2xl mx-auto font-light">
+                Halı saha maçlarınız artık yapay zeka analiziyle elinizde.
+            </p>
+            
+            <a href="#features" class="inline-flex items-center justify-center px-8 py-4 text-base font-bold text-slate-900 transition-all duration-200 bg-neonGreen rounded-full hover:bg-white hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neonGreen shadow-[0_0_20px_rgba(57,255,20,0.4)]">
+                Analize Başla
+                <i class="fa-solid fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+    </section>
+
+    <section id="features" class="py-24 bg-slate-900 relative z-10">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col items-center justify-center text-center mb-16 space-y-4">
+                <h2 class="text-3xl md:text-5xl font-bold text-white">
+                    Öne Çıkan Özellikler
+                </h2>
+                <p class="text-gray-400 max-w-2xl text-lg">
+                    Yapay zeka teknolojimizle halı saha performansınızı profesyonel seviyeye taşıyın.
+                </p>
+            </div>
+
+            <div id="featuresContainer" class="grid grid-cols-1 md:grid-cols-3 gap-8 focus-container items-stretch">
+                <div class="feature-card focus-word glass p-8 rounded-2xl transition-transform duration-300 group flex flex-col" style="filter: blur(5px); min-height: 100%;">
+                    <div class="w-14 h-14 bg-green-500/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-neonGreen/20 transition-colors">
+                        <i class="fa-solid fa-chart-line text-2xl text-neonGreen"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Detaylı İstatistikler</h3>
+                    <p class="text-gray-400 leading-relaxed flex-grow">Koşu mesafesi, pas isabeti ve şut analizleriyle oyununu geliştir, verilerle konuş.</p>
+                </div>
+
+                <div class="feature-card focus-word glass p-8 rounded-2xl transition-transform duration-300 group flex flex-col" style="filter: blur(5px); min-height: 100%;">
+                    <div class="w-14 h-14 bg-green-500/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-neonGreen/20 transition-colors">
+                        <i class="fa-solid fa-fire text-2xl text-neonGreen"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Isı Haritaları</h3>
+                    <p class="text-gray-400 leading-relaxed flex-grow">Sahanın neresinde etkilisin? Maç sonu detaylı bölgesel analiz raporu cebinde.</p>
+                </div>
+
+                <div class="feature-card focus-word glass p-8 rounded-2xl transition-transform duration-300 group flex flex-col" style="filter: blur(5px); min-height: 100%;">
+                    <div class="w-14 h-14 bg-green-500/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-neonGreen/20 transition-colors">
+                        <i class="fa-solid fa-brain text-2xl text-neonGreen"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">AI Strateji Koçu</h3>
+                    <p class="text-gray-400 leading-relaxed flex-grow">Yapay zeka, takımın ve rakibin analizine göre en iyi dizilişi ve taktiği önerir.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section id="stats" class="py-20 bg-gradient-to-b from-slate-900 to-[#0a0f1e] relative z-10">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-5xl mx-auto">
+                
+                <!-- Stat 1: Analiz Edilen Maç -->
+                <div class="text-center">
+                    <div class="mb-4">
+                        <span class="stat-number text-5xl md:text-6xl font-bold text-neonGreen" data-target="500">0</span>
+                        <span class="text-5xl md:text-6xl font-bold text-neonGreen">+</span>
+                    </div>
+                    <p class="text-lg text-white">Analiz Edilen Maç</p>
+                </div>
+                
+                <!-- Stat 2: Aktif Oyuncu -->
+                <div class="text-center">
+                    <div class="mb-4">
+                        <span class="stat-number text-5xl md:text-6xl font-bold text-neonGreen" data-target="5000">0</span>
+                        <span class="text-5xl md:text-6xl font-bold text-neonGreen">+</span>
+                    </div>
+                    <p class="text-lg text-white">Aktif Oyuncu</p>
+                </div>
+                
+                <!-- Stat 3: İşlenen Veri -->
+                <div class="text-center">
+                    <div class="mb-4">
+                        <span class="stat-number text-5xl md:text-6xl font-bold text-neonGreen" data-target="1000000">0</span>
+                        <span class="text-5xl md:text-6xl font-bold text-neonGreen">M+</span>
+                    </div>
+                    <p class="text-lg text-white">İşlenen Veri</p>
+                </div>
+                
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="py-20 bg-slate-900 relative overflow-hidden">
+        <div class="container mx-auto px-4">
+            <!-- Section Header -->
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">Nasıl Çalışır?</h2>
+                <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto">Akıllı kameralarımız maçını kaydeder, AI analiz eder, sen sadece oyna.</p>
+            </div>
+
+            <!-- Steps Container -->
+            <div class="relative max-w-6xl mx-auto">
+                <!-- Connecting Dashed Line (Desktop Only) -->
+                <div class="hidden md:block absolute top-24 left-0 right-0 h-0.5 border-t-2 border-dashed border-gray-700 z-0" style="width: 80%; margin: 0 auto;"></div>
+                
+                <!-- Steps Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-12 relative z-10">
+                    
+                    <!-- Step 1: StatsUp'lı Saha Bul -->
+                    <div class="how-step text-center">
+                        <div class="w-32 h-32 mx-auto mb-6 rounded-full border-4 border-neonGreen flex items-center justify-center bg-slate-900" style="box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);">
+                            <i class="fa-solid fa-map-location-dot text-5xl text-neonGreen"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-3">StatsUp'lı Saha Bul</h3>
+                        <p class="text-gray-400 leading-relaxed">Haritadan StatsUp akıllı kamera altyapısına sahip en yakın halı sahayı seç ve rezervasyonunu yap.</p>
+                    </div>
+
+                    <!-- Step 2: Sadece Maçını Oyna -->
+                    <div class="how-step text-center">
+                        <div class="w-32 h-32 mx-auto mb-6 rounded-full border-4 border-neonGreen flex items-center justify-center bg-slate-900" style="box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);">
+                            <i class="fa-solid fa-video text-5xl text-neonGreen"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-3">Sadece Maçını Oyna</h3>
+                        <p class="text-gray-400 leading-relaxed">Kayıt derdi yok. Sahadaki AI destekli kameralarımız maçı otomatik kaydeder, oyuncuları ve topu saniye saniye takip eder.</p>
+                    </div>
+
+                    <!-- Step 3: Verilerin Cebine Gelsin -->
+                    <div class="how-step text-center">
+                        <div class="w-32 h-32 mx-auto mb-6 rounded-full border-4 border-neonGreen flex items-center justify-center bg-slate-900" style="box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);">
+                            <i class="fa-solid fa-mobile-screen-button text-5xl text-neonGreen"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-3">Verilerin Cebine Gelsin</h3>
+                        <p class="text-gray-400 leading-relaxed">Maç biter bitmez detaylı analizlerin, gol videoların ve oyuncu kartın uygulamana otomatik olarak düşsün.</p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Card Section -->
+    <section id="demo-card" class="py-20 bg-slate-900 relative overflow-hidden">
+        <!-- Radial Gradient Background -->
+        <div class="absolute inset-0 z-0" style="background: radial-gradient(circle at center, rgba(57, 255, 20, 0.1) 0%, rgba(0, 0, 0, 1) 70%);"></div>
+        
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="flex flex-col md:flex-row items-center gap-12 max-w-6xl mx-auto">
+                
+                <!-- Left Column: Text Content -->
+                <div class="flex-1 text-center md:text-left">
+                    <h2 class="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                        Sahadaki Performansın, <span class="text-neonGreen">Profesyonel Kimliğin.</span>
+                    </h2>
+                    <p class="text-lg text-gray-400 mb-8 leading-relaxed">
+                        Yapay zeka analizleri sonucunda oluşan sana özel oyuncu kartınla istatistiklerini arkadaşlarınla paylaş. Kendi kartını görmek için hemen başla.
+                    </p>
+                    <a href="login.html" class="inline-block bg-neonGreen text-slate-900 font-bold text-lg px-8 py-4 rounded-lg hover:bg-green-400 transition-all duration-300 shadow-lg hover:shadow-[0_0_20px_rgba(57,255,20,0.5)]">
+                        Kartını Oluştur
+                        <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+
+                <!-- Right Column: Player Card -->
+                <div class="flex-1 flex justify-center">
+                    <div id="player-card" class="w-80 rounded-3xl border-2 border-neonGreen bg-gradient-to-br from-slate-800/40 to-black/60 backdrop-blur-sm p-6 relative" style="box-shadow: 0 0 30px rgba(57, 255, 20, 0.4);">
+                        
+                        <!-- Card Header: Rating & Position -->
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="text-left">
+                                <div class="text-5xl font-black text-neonGreen leading-none">88</div>
+                                <div class="text-xl font-bold text-white mt-1">FV</div>
+                            </div>
+                            <div class="text-right">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2018_FIFA_World_Cup.svg/150px-2018_FIFA_World_Cup.svg.png" alt="Logo" class="w-12 h-12 opacity-50">
+                            </div>
+                        </div>
+
+                        <!-- Player Image -->
+                        <div class="mb-4 flex justify-center">
+                            <img src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=300&h=300&fit=crop" alt="Player" class="w-48 h-48 object-cover rounded-2xl border-2 border-white/20">
+                        </div>
+
+                        <!-- Player Name -->
+                        <div class="text-center mb-6">
+                            <h3 class="text-2xl font-black text-white tracking-wider">DEMO OYUNCU</h3>
+                            <p class="text-sm text-gray-400 mt-1">StatsUp AI</p>
+                        </div>
+
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="bg-black/40 rounded-lg p-3 text-center border border-white/10">
+                                <div class="text-2xl font-bold text-neonGreen">85</div>
+                                <div class="text-xs text-gray-400 mt-1">HİZ</div>
+                            </div>
+                            <div class="bg-black/40 rounded-lg p-3 text-center border border-white/10">
+                                <div class="text-2xl font-bold text-neonGreen">90</div>
+                                <div class="text-xs text-gray-400 mt-1">ŞUT</div>
+                            </div>
+                            <div class="bg-black/40 rounded-lg p-3 text-center border border-white/10">
+                                <div class="text-2xl font-bold text-neonGreen">78</div>
+                                <div class="text-xs text-gray-400 mt-1">PAS</div>
+                            </div>
+                            <div class="bg-black/40 rounded-lg p-3 text-center border border-white/10">
+                                <div class="text-2xl font-bold text-neonGreen">82</div>
+                                <div class="text-xs text-gray-400 mt-1">DRİ</div>
+                            </div>
+                            <div class="bg-black/40 rounded-lg p-3 text-center border border-white/10">
+                                <div class="text-2xl font-bold text-neonGreen">45</div>
+                                <div class="text-xs text-gray-400 mt-1">DEF</div>
+                            </div>
+                            <div class="bg-black/40 rounded-lg p-3 text-center border border-white/10">
+                                <div class="text-2xl font-bold text-neonGreen">70</div>
+                                <div class="text-xs text-gray-400 mt-1">FİZ</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section - Detaylı ve Animasyonlu -->
+    <section id="pricing" class="py-24 bg-[#0a0f1e] relative z-10 border-t border-white/5 overflow-hidden">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-neonGreen/5 rounded-full blur-[100px] -z-10"></div>
+        <div class="container mx-auto px-4">
+            <div class="text-center max-w-3xl mx-auto mb-20">
+                <h2 class="text-3xl md:text-5xl font-bold text-white mb-6">Paketini Seç, <span class="text-neonGreen">Sahaya Hükmet</span></h2>
+                <p class="text-gray-400 text-lg">İster sadece gollerini say, ister profesyonel analizin derinliklerine in.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center max-w-6xl mx-auto">
+                
+                <!-- Card 1: Çaylak -->
+                <div class="pricing-card bg-slate-800/50 border border-white/10 rounded-2xl p-8 hover:bg-slate-800 transition-colors relative group" 
+                     data-electric-border 
+                     data-electric-color="#60a5fa" 
+                     data-electric-speed="0.8" 
+                     data-electric-chaos="0.8" 
+                     data-electric-thickness="2">
+                    <h3 class="text-xl font-bold text-white mb-2">Çaylak</h3>
+                    <div class="text-4xl font-bold text-white mb-6">Ücretsiz</div>
+                    <p class="text-gray-400 text-sm mb-8">Eğlencesine oynayanlar için temel skor takibi.</p>
+                    <ul class="space-y-4 mb-8 text-gray-300 text-sm">
+                        <li class="flex items-center"><i class="fa-solid fa-check text-neonGreen mr-3"></i> Gol ve Asist Sayısı</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-neonGreen mr-3"></i> Maç Özeti (Video)</li>
+                        <li class="flex items-center text-gray-600"><i class="fa-solid fa-xmark mr-4"></i> <span class="line-through">Pas Başarı Yüzdesi</span></li>
+                        <li class="flex items-center text-gray-600"><i class="fa-solid fa-xmark mr-4"></i> <span class="line-through">Koşu Mesafesi ve Hız</span></li>
+                        <li class="flex items-center text-gray-600"><i class="fa-solid fa-xmark mr-4"></i> <span class="line-through">Isı Haritası</span></li>
+                    </ul>
+                    <a href="register.html" class="block w-full py-3 rounded-lg border border-white/20 text-white text-center font-bold hover:bg-white hover:text-slate-900 transition-all">Ücretsiz Başla</a>
+                </div>
+                
+                <!-- Card 2: Yıldız (Featured) -->
+                <div class="pricing-card relative bg-slate-800/90 border-2 border-neonGreen rounded-2xl p-10 shadow-[0_0_40px_rgba(57,255,20,0.15)] transform md:scale-110 z-10" 
+                     data-electric-border 
+                     data-electric-color="#39ff14" 
+                     data-electric-speed="1.2" 
+                     data-electric-chaos="1.5" 
+                     data-electric-thickness="3">
+                    <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-neonGreen text-slate-900 px-6 py-1.5 rounded-full text-sm font-extrabold uppercase tracking-wider shadow-lg shadow-neonGreen/20">
+                        En Popüler
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">Yıldız</h3>
+                    <div class="text-5xl font-bold text-white mb-6">₺199<span class="text-lg text-gray-400 font-normal">/ay</span></div>
+                    <p class="text-gray-300 text-sm mb-8">Profesyonel oyuncu gibi detaylı analiz isteyenler için.</p>
+                    <ul class="space-y-4 mb-8 text-white text-sm font-medium">
+                        <li class="flex items-center"><i class="fa-solid fa-check text-neonGreen mr-3"></i> <strong>Tüm Çaylak Özellikleri</strong></li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-neonGreen mr-3"></i> Pas % ve Şut İsabeti</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-neonGreen mr-3"></i> Maksimum Hız ve Mesafe</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-neonGreen mr-3"></i> Sahada Isı Haritası</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-neonGreen mr-3"></i> AI Oyuncu Kartı (FIFA Tarzı)</li>
+                    </ul>
+                    <a href="register.html" class="block w-full py-4 rounded-lg bg-neonGreen text-slate-900 text-center font-bold hover:bg-white transition-all shadow-lg shadow-neonGreen/20 hover:shadow-neonGreen/40 transform hover:-translate-y-1">Yıldız Ol</a>
+                </div>
+                
+                <!-- Card 3: Takım -->
+                <div class="pricing-card bg-slate-800/50 border border-white/10 rounded-2xl p-8 hover:bg-slate-800 transition-colors relative group" 
+                     data-electric-border 
+                     data-electric-color="#fbbf24" 
+                     data-electric-speed="0.9" 
+                     data-electric-chaos="1" 
+                     data-electric-thickness="2">
+                    <h3 class="text-xl font-bold text-white mb-2">Takım</h3>
+                    <div class="text-4xl font-bold text-white mb-6">₺980<span class="text-lg text-gray-400 font-normal">/ay</span></div>
+                    <p class="text-gray-400 text-sm mb-8">Tüm kadro için profesyonel analiz. <br><span class="text-neonGreen">Kişi başı sadece ~140₺</span></p>
+                    <ul class="space-y-4 mb-8 text-gray-300 text-sm">
+                        <li class="flex items-center"><i class="fa-solid fa-users text-neonGreen mr-3"></i> <strong>14 Kişilik 'Yıldız' Paketi</strong></li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-neonGreen mr-3"></i> Takım İçi Karşılaştırma</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-neonGreen mr-3"></i> Haftanın Oyuncusu Seçimi</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-neonGreen mr-3"></i> Maç Sonu Takım Analizi</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-neonGreen mr-3"></i> Lig ve Puan Durumu</li>
+                    </ul>
+                    <a href="register.html" class="block w-full py-3 rounded-lg border border-white/20 text-white text-center font-bold hover:bg-white hover:text-slate-900 transition-all">Takımını Kur</a>
+                </div>
+                
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-[#050914] border-t border-white/5">
+        <div class="container mx-auto px-4 py-12">
+            
+            <!-- Footer Grid - 4 Columns -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+                
+                <!-- Column 1: Logo & Slogan -->
+                <div>
+                    <h3 class="text-3xl font-black mb-4">
+                        <span class="text-white">Stats</span><span class="text-neonGreen">Up</span>
+                    </h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        Amatör Ruh, Profesyonel Analiz.
+                    </p>
+                </div>
+                
+                <!-- Column 2: Quick Menu -->
+                <div>
+                    <h4 class="text-white font-bold text-lg mb-4">Hızlı Menü</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#hero" class="text-gray-500 hover:text-white transition-colors text-sm">Ana Sayfa</a></li>
+                        <li><a href="#features" class="text-gray-500 hover:text-white transition-colors text-sm">Özellikler</a></li>
+                        <li><a href="#pricing" class="text-gray-500 hover:text-white transition-colors text-sm">Paketler</a></li>
+                        <li><a href="login.html" class="text-gray-500 hover:text-white transition-colors text-sm">Giriş Yap</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Column 3: Legal -->
+                <div>
+                    <h4 class="text-white font-bold text-lg mb-4">Yasal</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" onclick="openLegalModal('termsModal'); return false;" class="text-gray-500 hover:text-neonGreen transition-colors text-sm cursor-pointer">Kullanım Şartları</a></li>
+                        <li><a href="#" onclick="openLegalModal('privacyModal'); return false;" class="text-gray-500 hover:text-neonGreen transition-colors text-sm cursor-pointer">Gizlilik Politikası</a></li>
+                        <li><a href="#" onclick="openLegalModal('cookiesModal'); return false;" class="text-gray-500 hover:text-neonGreen transition-colors text-sm cursor-pointer">Çerezler</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Column 4: Newsletter -->
+                <div>
+                    <h4 class="text-white font-bold text-lg mb-4">Gelişmeleri Takip Et</h4>
+                    <form class="flex gap-2" onsubmit="event.preventDefault(); window.location.href='login.html';">
+                        <input 
+                            type="email" 
+                            placeholder="E-posta" 
+                            class="flex-1 px-4 py-2 bg-slate-900 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-neonGreen transition-colors placeholder-gray-600"
+                        >
+                        <button 
+                            type="submit"
+                            class="bg-neonGreen text-slate-900 font-bold px-4 py-2 rounded-lg hover:bg-green-400 transition-colors text-sm whitespace-nowrap"
+                        >
+                            Abone Ol
+                        </button>
+                    </form>
+                </div>
+                
+            </div>
+            
+            <!-- Footer Bottom: Copyright & Social Media -->
+            <div class="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-gray-600 text-sm">
+                    &copy; 2025 StatsUp
+                </p>
+                
+                <!-- Social Media Icons -->
+                <div class="flex gap-4">
+                    <a href="#" class="text-gray-600 hover:text-gray-400 transition-colors">
+                        <i class="fa-brands fa-twitter"></i>
+                    </a>
+                    <a href="#" class="text-gray-600 hover:text-gray-400 transition-colors">
+                        <i class="fa-brands fa-instagram"></i>
+                    </a>
+                    <a href="#" class="text-gray-600 hover:text-gray-400 transition-colors">
+                        <i class="fa-brands fa-linkedin"></i>
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    
+    <!-- Liquid Ether Background Effect -->
+    <script src="liquid-ether.js"></script>
+    
+    <!-- Electric Border Effect -->
+    <script src="electric-border.js"></script>
+
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Hero Animasyonu (Basit ve Çakışmasız)
+        gsap.from("#hero h1", { opacity: 0, y: 50, duration: 1, delay: 0.2 });
+        gsap.from("#hero p", { opacity: 0, y: 30, duration: 1, delay: 0.4 });
+        gsap.from("#hero a", { opacity: 0, y: 30, duration: 1, delay: 0.6 });
+
+        // Features Animasyonu (Sadece kartları oynatır, başlığı bozmaz)
+        gsap.from(".feature-card", {
+            scrollTrigger: {
+                trigger: "#features",
+                start: "top 80%",
+            },
+            y: 50,
+            opacity: 0,
+            duration: 0.8,
+            stagger: 0.2,
+            ease: "power2.out"
+        });
+
+        // Stats Counter Animasyonu
+        const statNumbers = document.querySelectorAll('.stat-number');
+        
+        statNumbers.forEach(stat => {
+            const target = parseInt(stat.getAttribute('data-target'));
+            
+            ScrollTrigger.create({
+                trigger: "#stats",
+                start: "top 80%",
+                onEnter: () => {
+                    gsap.to(stat, {
+                        innerText: target,
+                        duration: 2,
+                        ease: "power1.out",
+                        snap: { innerText: 1 },
+                        onUpdate: function() {
+                            const value = Math.floor(this.targets()[0].innerText);
+                            // 1 milyon için özel formatlama (M harfi için)
+                            if (target >= 1000000) {
+                                stat.innerText = (value / 1000000).toFixed(1);
+                            } else if (target >= 1000) {
+                                // Binlik ayırıcı ekle
+                                stat.innerText = value.toLocaleString('tr-TR');
+                            } else {
+                                stat.innerText = value;
+                            }
+                        }
+                    });
+                },
+                once: true
+            });
+        });
+
+        // How It Works Animasyonu (Stagger ile sırayla giriş)
+        gsap.from(".how-step", {
+            scrollTrigger: {
+                trigger: "#how-it-works",
+                start: "top 70%",
+            },
+            opacity: 0,
+            y: 50,
+            duration: 0.8,
+            stagger: 0.3,
+            ease: "power2.out"
+        });
+
+        // Player Card Floating Animasyonu
+        gsap.to("#player-card", {
+            y: -20,
+            duration: 2,
+            ease: "power1.inOut",
+            repeat: -1,
+            yoyo: true
+        });
+
+        // Pricing Kartları Animasyonu - Yeni (Back.out ile yaylanma efekti)
+        gsap.from(".pricing-card", {
+            scrollTrigger: {
+                trigger: "#pricing",
+                start: "top 75%", // Bölüm görünmeye başlayınca
+            },
+            y: 100,          // Aşağıdan yukarı doğru
+            opacity: 0,
+            duration: 1,
+            stagger: 0.2,    // Kartlar arası 0.2sn gecikme
+            ease: "back.out(1.7)" // Yaylanma efekti
+        });
+
+        // True Focus Effect for Feature Cards
+        function initTrueFocus() {
+            const container = document.getElementById('featuresContainer');
+            if (!container) return;
+            
+            const cards = container.querySelectorAll('.focus-word');
+            let currentIndex = 0;
+            const animationDuration = 500; // 0.5s
+            const pauseBetweenAnimations = 2000; // 2s
+            
+            // Create focus frame
+            const focusFrame = document.createElement('div');
+            focusFrame.className = 'focus-frame';
+            focusFrame.style.setProperty('--border-color', '#39ff14');
+            focusFrame.style.setProperty('--glow-color', 'rgba(57, 255, 20, 0.6)');
+            focusFrame.innerHTML = `
+                <span class="corner top-left"></span>
+                <span class="corner top-right"></span>
+                <span class="corner bottom-left"></span>
+                <span class="corner bottom-right"></span>
+            `;
+            container.appendChild(focusFrame);
+            
+            function updateFocus() {
+                // Remove blur from all cards and remove active class
+                cards.forEach((card, index) => {
+                    if (index === currentIndex) {
+                        card.style.filter = 'blur(0px)';
+                        card.classList.add('active');
+                    } else {
+                        card.style.filter = 'blur(5px)';
+                        card.classList.remove('active');
+                    }
+                });
+                
+                // Update focus frame position
+                const activeCard = cards[currentIndex];
+                const containerRect = container.getBoundingClientRect();
+                const cardRect = activeCard.getBoundingClientRect();
+                
+                focusFrame.style.left = (cardRect.left - containerRect.left) + 'px';
+                focusFrame.style.top = (cardRect.top - containerRect.top) + 'px';
+                focusFrame.style.width = cardRect.width + 'px';
+                focusFrame.style.height = cardRect.height + 'px';
+                focusFrame.classList.add('active');
+            }
+            
+            function cycleFocus() {
+                updateFocus();
+                currentIndex = (currentIndex + 1) % cards.length;
+            }
+            
+            // Initial focus
+            setTimeout(() => {
+                updateFocus();
+                // Start cycling
+                setInterval(cycleFocus, animationDuration + pauseBetweenAnimations);
+            }, 500);
+            
+            // Update on window resize
+            window.addEventListener('resize', () => {
+                if (focusFrame.classList.contains('active')) {
+                    updateFocus();
+                }
+            });
+        }
+
+        // Legal Modal Functions
+        function openLegalModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        
+        function closeLegalModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        }
+        
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('legal-modal')) {
+                closeLegalModal(event.target.id);
+            }
+        });
+        
+        // Close modal with ESC key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const activeModal = document.querySelector('.legal-modal.active');
+                if (activeModal) {
+                    closeLegalModal(activeModal.id);
+                }
+            }
+        });
+
+        // Sayfa yüklendiginde çalışır
+        document.addEventListener("DOMContentLoaded", function() {
+            // Acil Durum Temizliği: Gerekirse bu satırın yorumunu kaldırıp localStorage'ı sıfırlayabilirsiniz
+            // localStorage.removeItem('isLoggedIn');
+            
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            const guestMenu = document.getElementById('guest-menu');
+            const userMenu = document.getElementById('user-menu');
+            
+            // Sadece giriş yapılmışsa menüleri değiştir
+            if (isLoggedIn === 'true') {
+                // Giriş yapılmışsa: Guest gizle, User göster
+                guestMenu.classList.add('hidden');
+                userMenu.classList.remove('hidden');
+            }
+            // Eğer false veya boş ise hiçbir şey yapma (HTML'deki varsayılan hali kalsın)
+            
+            // Çıkış Yap Butonu
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function() {
+                    localStorage.removeItem('isLoggedIn');
+                    window.location.reload();
+                });
+            }
+            
+            // Initialize True Focus Effect
+            initTrueFocus();
+        });
+    </script>
+</body>
+</html>

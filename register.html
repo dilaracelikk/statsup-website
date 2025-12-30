@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="StatsUp - Kayıt Ol">
+    <title>StatsUp - Kayıt Ol</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Custom Tailwind Konfigürasyonu -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'neonGreen': '#39ff14',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Custom CSS -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="h-screen flex items-center justify-center bg-slate-900">
+    
+    <!-- Register Card Container -->
+    <div class="w-full max-w-md mx-auto px-4">
+        
+        <!-- Register Card -->
+        <div class="bg-slate-800 p-8 rounded-2xl shadow-2xl">
+            
+            <!-- Ana Sayfaya Dön Link -->
+            <div class="text-right mb-4">
+                <a href="index.html" class="text-gray-400 hover:text-neonGreen transition-colors text-sm inline-flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Ana Sayfaya Dön
+                </a>
+            </div>
+            
+            <!-- Logo -->
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-black">
+                    <span class="text-white">Stats</span><span class="text-neonGreen">Up</span>
+                </h1>
+                <p class="text-gray-400 text-sm mt-2">Amatör Ruh, Profesyonel Analiz</p>
+            </div>
+            
+            <!-- Success Message Box (Hidden by default) -->
+            <div id="success-msg" class="hidden bg-green-500/10 border-2 border-green-500 text-green-500 px-4 py-3 rounded-lg mb-6 text-sm">
+                <i class="fa-solid fa-circle-check mr-2"></i>
+                <span>Kayıt Başarılı, Giriş Yapabilirsiniz!</span>
+            </div>
+            
+            <!-- Error Message Box (Hidden by default) -->
+            <div id="error-msg" class="hidden bg-red-500/10 border-2 border-red-500 text-red-500 px-4 py-3 rounded-lg mb-6 text-sm">
+                <i class="fa-solid fa-circle-exclamation mr-2"></i>
+                <span id="error-text">Lütfen tüm alanları doldurun!</span>
+            </div>
+            
+            <!-- Register Form -->
+            <form id="registerForm" class="space-y-6">
+                
+                <!-- Ad Soyad Input -->
+                <div>
+                    <label for="fullname" class="block text-sm font-medium text-gray-300 mb-2">
+                        Ad Soyad
+                    </label>
+                    <input 
+                        type="text" 
+                        id="fullname" 
+                        name="fullname"
+                        required
+                        class="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-neonGreen focus:ring-2 focus:ring-neonGreen/20 transition-all"
+                        placeholder="Ahmet Yılmaz"
+                    >
+                </div>
+                
+                <!-- Email Input -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-300 mb-2">
+                        E-posta
+                    </label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email"
+                        required
+                        class="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-neonGreen focus:ring-2 focus:ring-neonGreen/20 transition-all"
+                        placeholder="ornek@gmail.com"
+                    >
+                </div>
+                
+                <!-- Password Input -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-300 mb-2">
+                        Şifre
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password"
+                        required
+                        class="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-neonGreen focus:ring-2 focus:ring-neonGreen/20 transition-all"
+                        placeholder="••••••••"
+                    >
+                </div>
+                
+                <!-- Password Confirm Input -->
+                <div>
+                    <label for="password-confirm" class="block text-sm font-medium text-gray-300 mb-2">
+                        Şifre Tekrar
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password-confirm" 
+                        name="password-confirm"
+                        required
+                        class="w-full px-4 py-3 bg-slate-700 border-2 border-slate-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-neonGreen focus:ring-2 focus:ring-neonGreen/20 transition-all"
+                        placeholder="••••••••"
+                    >
+                </div>
+                
+                <!-- Register Button -->
+                <button 
+                    type="submit" 
+                    id="registerBtn"
+                    class="w-full bg-neonGreen text-slate-900 font-bold text-lg py-3 rounded-lg hover:bg-green-400 transition-all duration-300 shadow-lg hover:shadow-[0_0_20px_rgba(57,255,20,0.5)]"
+                >
+                    Kayıt Ol
+                </button>
+                
+            </form>
+            
+            <!-- Login Link -->
+            <div class="mt-6 text-center">
+                <span class="text-gray-400 text-sm">Zaten hesabın var mı?</span>
+                <a href="login.html" class="text-neonGreen hover:text-green-400 text-sm font-semibold ml-2 transition-colors">
+                    Giriş Yap
+                </a>
+            </div>
+            
+        </div>
+        
+    </div>
+
+    <!-- Form Submit Handler -->
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const fullname = document.getElementById('fullname').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const passwordConfirm = document.getElementById('password-confirm').value;
+            
+            const errorMsg = document.getElementById('error-msg');
+            const errorText = document.getElementById('error-text');
+            const successMsg = document.getElementById('success-msg');
+            
+            // Hata mesajını gizle
+            errorMsg.classList.add('hidden');
+            successMsg.classList.add('hidden');
+            
+            // Validasyon kontrolleri
+            if (!fullname || !email || !password || !passwordConfirm) {
+                errorText.textContent = 'Lütfen tüm alanları doldurun!';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+            
+            if (password.length < 6) {
+                errorText.textContent = 'Şifre en az 6 karakter olmalıdır!';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+            
+            if (password !== passwordConfirm) {
+                errorText.textContent = 'Şifreler eşleşmiyor!';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+            
+            // E-posta ve şifreyi localStorage'a kaydet
+            const userData = {
+                fullname: fullname,
+                email: email,
+                password: password,
+                registeredAt: new Date().toISOString()
+            };
+            
+            localStorage.setItem('statsup_user', JSON.stringify(userData));
+            
+            // Başarı mesajını göster
+            successMsg.classList.remove('hidden');
+            
+            // Formu temizle
+            this.reset();
+            
+            // 2 saniye sonra login sayfasına yönlendir
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
